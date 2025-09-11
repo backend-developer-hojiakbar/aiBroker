@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='36' height='36' viewBox='0 0 36 36' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='logoGradient' x1='0' y1='0' x2='36' y2='36'%3E%3Cstop stop-color='%2300B8D9'/%3E%3Cstop offset='1' stop-color='%238E44AD'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M18 2C9.163 2 2 9.163 2 18C2 26.837 9.163 34 18 34C26.837 34 34 26.837 34 18C34 9.163 26.837 2 18 2Z' stroke='url(%23logoGradient)' stroke-width='3' stroke-miterlimit='10'/%3E%3Cpath d='M12 18.6L16.2 22.8L24 15' stroke='url(%23logoGradient)' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI-Broker | Tender Tahlili</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              'brand': {
+                'primary': '#00B8D9', // Vivid Cyan
+                'secondary': '#8E44AD', // Wisteria Purple
+                'gradient-from': '#00B8D9',
+                'gradient-to': '#8E44AD',
+              },
+               'corporate': {
+                'bg': '#2C3E50',
+                'primary': '#3498DB',
+                'hover': '#34495E'
+              },
+              'cosmos': {
+                'bg': '#1A1A2E',
+                'primary': '#E040FB',
+                'hover': '#2C2C54'
+              },
+              'energy': {
+                'bg': '#331D00',
+                'primary': '#FF7A00',
+                'hover': '#593810'
+              },
+              'accent': '#FFAF00',   // Cyber Yellow
+              'background': '#0A0C10', // Even darker background
+              'surface': '#161B22', // Solid dark surface (gray-900)
+              'surface-light': 'rgba(255, 255, 255, 0.05)', // Lighter surface for hover states
+              'text': {
+                'primary': '#E6EDF3', // Brighter white
+                'secondary': '#7D8590', // Lighter gray
+                'on-brand': '#FFFFFF',
+              },
+              'border': 'rgba(255, 255, 255, 0.1)', // For borders
+              'status-success': '#2ECC71',
+              'status-warning': '#F1C40F',
+              'status-danger': '#E74C3C',
+            },
+             boxShadow: {
+              'soft': '0 8px 32px rgba(0, 0, 0, 0.3)',
+              'glow': '0 0 15px rgba(0, 184, 217, 0.3)',
+              'glow-lg': '0 0 30px rgba(0, 184, 217, 0.4)',
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.5s ease-in-out',
+              'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+              'pulse-glow': 'pulseGlow 2.5s ease-in-out infinite',
+              'background-pan': 'backgroundPan 15s ease infinite',
+              'spinner': 'spinner 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite',
+              'ai-pulse': 'aiPulse 2s ease-in-out infinite',
+              'shimmer': 'shimmer 2s infinite',
+              'sidebar-open': 'sidebarOpen 0.3s ease-in-out',
+              'sidebar-close': 'sidebarClose 0.3s ease-in-out',
+            },
+            keyframes: {
+              fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+              slideUp: { '0%': { opacity: 0, transform: 'translateY(24px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+              pulseGlow: { '0%, 100%': { filter: 'brightness(1)', transform: 'scale(1)' }, '50%': { filter: 'brightness(1.2)', transform: 'scale(1.05)' } },
+              backgroundPan: { '0%': { 'background-position': '0% 50%' }, '50%': { 'background-position': '100% 50%' }, '100%': { 'background-position': '0% 50%' } },
+              spinner: { '0%': { transform: 'rotate(0deg)' }, '100%': { transform: 'rotate(360deg)' } },
+              aiPulse: { '0%, 100%': { transform: 'scale(1)', opacity: 0.8 }, '50%': { transform: 'scale(1.15)', opacity: 1 } },
+              shimmer: { '0%': { 'background-position': '-1000px 0' }, '100%': { 'background-position': '1000px 0' } },
+              sidebarOpen: { '0%': { width: '4.5rem' }, '100%': { width: '16rem' } },
+              sidebarClose: { '0%': { width: '16rem' }, '100%': { width: '4.5rem' } },
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        background-color: #0A0C10;
+      }
+      /* Simple scrollbar styling for a dark theme */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #161B22;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #7D8590;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #00B8D9;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.17.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
