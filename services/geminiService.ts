@@ -1,8 +1,37 @@
 import { GoogleGenAI, Type, Chat, GenerateContentResponse } from "@google/genai";
-import { AnalysisResult, TenderData, Platform, LotPassport, AnalysisContext, ChatMessage, CompanyProfile, ContractAnalysisResult, AIInsight, DiscoveredTender, VisionaryInsight, SourcingResult, SourcingRecommendation } from '../types';
+import { AnalysisResult, TenderData, Platform, LotPassport, AnalysisContext, ChatMessage, CompanyProfile, ContractAnalysisResult, AIInsight, DiscoveredTender, VisionaryInsight, SourcingRecommendation } from '../types';
+import { googleCustomSearch } from '../utils/googleCustomSearch';
 
 let chat: Chat | null = null;
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+// Add retryWithBackoff function for handling API retries with exponential backoff
+async function retryWithBackoff<T>(fn: () => Promise<T>, retries: number = 3, baseDelay: number = 1000): Promise<T> {
+    let lastError: Error;
+    
+    for (let i = 0; i <= retries; i++) {
+        try {
+            return await fn();
+        } catch (error) {
+            lastError = error as Error;
+            
+            // If this was the last retry, throw the error
+            if (i === retries) {
+                throw lastError;
+            }
+            
+            // Calculate delay with exponential backoff and jitter
+            const delay = Math.min(baseDelay * Math.pow(2, i), 10000) + Math.random() * 1000;
+            console.log(`Attempt ${i + 1} failed. Retrying in ${delay.toFixed(0)}ms...`);
+            
+            // Wait for the calculated delay
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+    
+    // This should never be reached, but TypeScript requires it
+    throw lastError!;
+}
 
 // Helper function to convert a File to a base64 string
 const fileToBase64 = (file: File): Promise<string> => {
@@ -25,6 +54,7 @@ const generateProductVariations = (productName: string): string[] => {
         productName,
         productName.toLowerCase(),
         productName.toUpperCase(),
+        productName.charAt(0).toUpperCase() + productName.slice(1).toLowerCase(), // Title case
         // Common Uzbek/Russian letter substitutions
         productName.replace(/ya/g, 'a'), // Replace ya with a
         productName.replace(/yo/g, 'o'), // Replace yo with o
@@ -36,25 +66,149 @@ const generateProductVariations = (productName: string): string[] => {
         productName.replace(/ғ/g, 'g'), // Replace Uzbek ǵ with g
         productName.replace(/ҳ/g, 'h'), // Replace Uzbek ḩ with h
         productName.replace(/қ/g, 'q'), // Replace Uzbek q with q
-        // Add more language-specific variations as needed
+        productName.replace(/а/g, 'a'), // Replace Cyrillic a with Latin a
+        productName.replace(/б/g, 'b'), // Replace Cyrillic b with Latin b
+        productName.replace(/с/g, 's'), // Replace Cyrillic c with Latin s
+        productName.replace(/д/g, 'd'), // Replace Cyrillic d with Latin d
+        productName.replace(/е/g, 'e'), // Replace Cyrillic e with Latin e
+        productName.replace(/ф/g, 'f'), // Replace Cyrillic f with Latin f
+        productName.replace(/г/g, 'g'), // Replace Cyrillic g with Latin g
+        productName.replace(/х/g, 'x'), // Replace Cyrillic x with Latin x
+        productName.replace(/и/g, 'i'), // Replace Cyrillic i with Latin i
+        productName.replace(/ж/g, 'j'), // Replace Cyrillic j with Latin j
+        productName.replace(/к/g, 'k'), // Replace Cyrillic k with Latin k
+        productName.replace(/л/g, 'l'), // Replace Cyrillic l with Latin l
+        productName.replace(/м/g, 'm'), // Replace Cyrillic m with Latin m
+        productName.replace(/н/g, 'n'), // Replace Cyrillic n with Latin n
+        productName.replace(/о/g, 'o'), // Replace Cyrillic o with Latin o
+        productName.replace(/п/g, 'p'), // Replace Cyrillic p with Latin p
+        productName.replace(/р/g, 'r'), // Replace Cyrillic r with Latin r
+        productName.replace(/с/g, 's'), // Replace Cyrillic s with Latin s
+        productName.replace(/т/g, 't'), // Replace Cyrillic t with Latin t
+        productName.replace(/у/g, 'u'), // Replace Cyrillic u with Latin u
+        productName.replace(/в/g, 'v'), // Replace Cyrillic v with Latin v
+        productName.replace(/й/g, 'y'), // Replace Cyrillic y with Latin y
+        productName.replace(/з/g, 'z'), // Replace Cyrillic z with Latin z
+        // Additional common typos and variations
+        productName.replace(/televizor/g, 'televisor'),
+        productName.replace(/komputer/g, 'kompyuter'),
+        productName.replace(/printer/g, 'printe'),
+        productName.replace(/monitor/g, 'monito'),
+        productName.replace(/klaviatura/g, 'klaviatur'),
+        productName.replace(/noutbuk/g, 'noutbook'),
+        // Additional common product terms
+        productName.replace(/telefon/g, 'telefonlar'),
+        productName.replace(/kompyuter/g, 'kompyuterlar'),
+        productName.replace(/server/g, 'serverlar'),
+        productName.replace(/kabel/g, 'kabellar'),
+        productName.replace(/kran/g, 'kranchalar'),
+        productName.replace(/nasos/g, 'nasoslar'),
+        // Plural forms
+        productName.endsWith('lar') ? productName : productName + 'lar',
+        productName.endsWith('lar') ? productName.slice(0, -3) : productName,
     ];
     
     // Add common search terms in different languages
     const searchTerms = [
         ...typoVariations,
+        // Uzbek terms
         `${productName} narx`, // price in Uzbek
-        `${productName} цена`, // price in Russian
-        `${productName} price`, // price in English
         `${productName} yetkazib berish`, // delivery in Uzbek
-        `${productName} доставка`, // delivery in Russian
-        `${productName} delivery`, // delivery in English
         `${productName} sotish`, // sale in Uzbek
+        `${productName} opt`, // wholesale in Uzbek
+        `${productName} ulgurji`, // wholesale in Uzbek
+        `${productName} zavod`, // factory in Uzbek
+        `${productName} ishlab chiqaruvchi`, // manufacturer in Uzbek
+        `${productName} ta'minotchi`, // supplier in Uzbek
+        `${productName} distributor`, // distributor in Uzbek
+        `${productName} import`, // import in Uzbek
+        `${productName} eksport`, // export in Uzbek
+        `${productName} yetkazuvchi`, // deliverer in Uzbek
+        `${productName} sotuvchi`, // seller in Uzbek
+        `${productName} do'kon`, // shop/store in Uzbek
+        `${productName} do'konlar`, // shops/stores in Uzbek
+        `${productName} yetkazib berish muddati`, // delivery time in Uzbek
+        `${productName} sifati`, // quality in Uzbek
+        `${productName} sertifikat`, // certificate in Uzbek
+        `${productName} chegirma`, // discount in Uzbek
+        `${productName} arzon`, // cheap in Uzbek
+        `${productName} qimmat`, // expensive in Uzbek
+        // Russian terms
+        `${productName} цена`, // price in Russian
+        `${productName} доставка`, // delivery in Russian
         `${productName} продажа`, // sale in Russian
+        `${productName} опт`, // wholesale in Russian
+        `${productName} завод`, // factory in Russian
+        `${productName} производитель`, // manufacturer in Russian
+        `${productName} поставщик`, // supplier in Russian
+        `${productName} дистрибьютор`, // distributor in Russian
+        `${productName} импорт`, // import in Russian
+        `${productName} экспорт`, // export in Russian
+        `${productName} поставки`, // supplies in Russian
+        `${productName} продавец`, // seller in Russian
+        `${productName} магазин`, // shop/store in Russian
+        `${productName} магазины`, // shops/stores in Russian
+        `${productName} срок поставки`, // delivery time in Russian
+        `${productName} качество`, // quality in Russian
+        `${productName} сертификат`, // certificate in Russian
+        `${productName} скидка`, // discount in Russian
+        `${productName} дешево`, // cheap in Russian
+        `${productName} дорого`, // expensive in Russian
+        // English terms
+        `${productName} price`, // price in English
+        `${productName} delivery`, // delivery in English
         `${productName} sale`, // sale in English
+        `${productName} wholesale`, // wholesale in English
+        `${productName} factory`, // factory in English
+        `${productName} manufacturer`, // manufacturer in English
+        `${productName} supplier`, // supplier in English
+        `${productName} distributor`, // distributor in English
+        `${productName} import`, // import in English
+        `${productName} export`, // export in English
+        `${productName} supplies`, // supplies in English
+        `${productName} seller`, // seller in English
+        `${productName} store`, // store in English
+        `${productName} stores`, // stores in English
+        `${productName} delivery time`, // delivery time in English
+        `${productName} quality`, // quality in English
+        `${productName} certificate`, // certificate in English
+        `${productName} discount`, // discount in English
+        `${productName} cheap`, // cheap in English
+        `${productName} expensive`, // expensive in English
+    ];
+    
+    // Add common product category terms for better search coverage
+    const categoryTerms = [
+        ...searchTerms,
+        // Electronics
+        `${productName} elektronika`, `${productName} электроника`, `${productName} electronics`,
+        // Construction materials
+        `${productName} qurilish materiallari`, `${productName} строительные материалы`, `${productName} construction materials`,
+        // Office supplies
+        `${productName} ofis buyumlari`, `${productName} офисные принадлежности`, `${productName} office supplies`,
+        // Industrial equipment
+        `${productName} sanoat uskunalari`, `${productName} промышленное оборудование`, `${productName} industrial equipment`,
+        // Medical supplies
+        `${productName} tibbiy buyumlar`, `${productName} медицинские принадлежности`, `${productName} medical supplies`,
+        // Food products
+        `${productName} oziq-ovqat mahsulotlari`, `${productName} пищевые продукты`, `${productName} food products`,
+        // Clothing
+        `${productName} kiyim-kechak`, `${productName} одежда`, `${productName} clothing`,
+        // Automotive parts
+        `${productName} avto ehtiyot qismlar`, `${productName} автозапчасти`, `${productName} automotive parts`,
+        // Additional categories for better coverage
+        `${productName} texnika`, `${productName} техника`, `${productName} tech`,
+        `${productName} jihozlar`, `${productName} оборудование`, `${productName} equipment`,
+        `${productName} materiallar`, `${productName} материалы`, `${productName} materials`,
+        `${productName} buyumlar`, `${productName} предметы`, `${productName} items`,
+        // Service-related terms
+        `${productName} xizmati`, `${productName} сервис`, `${productName} service`,
+        `${productName} ta'mirlash`, `${productName} ремонт`, `${productName} repair`,
+        `${productName} o'rnatish`, `${productName} установка`, `${productName} installation`,
     ];
     
     // Remove duplicates and empty strings
-    return [...new Set(searchTerms.filter(v => v && v.length > 0))];
+    return [...new Set(categoryTerms.filter(v => v && v.length > 0))];
 };
 
 const createSourcingPrompt = (tenderText: string, hasFiles: boolean, platform: Platform) => {
@@ -110,29 +264,83 @@ const createSourcingPrompt = (tenderText: string, hasFiles: boolean, platform: P
        - "[PRODUCT_NAME_LATIN] zavod ishlab chiqaruvchi O'zbekiston" OR "[PRODUCT_NAME_ENGLISH] factory manufacturer Uzbekistan"
        - "[PRODUCT_NAME_LATIN] bulk wholesale Uzbekistan cheapest" OR "[PRODUCT_NAME_CYRILLIC] опт оптовая продажа Узбекистан дешево"
        - "[PRODUCT_NAME_LATIN] factory direct price Uzbekistan" OR "[PRODUCT_NAME_RUSSIAN] цена завода напрямую Узбекистан"
+       - "[PRODUCT_NAME_LATIN] O'zbekiston bozorida narx" OR "[PRODUCT_NAME_RUSSIAN] цена на рынке Узбекистана"
+       - "[PRODUCT_NAME_LATIN] Toshkentda sotish" OR "[PRODUCT_NAME_RUSSIAN] продажа в Ташкенте"
+       - "[PRODUCT_NAME_LATIN] andoza narx" OR "[PRODUCT_NAME_RUSSIAN] средняя цена"
+       - "[PRODUCT_NAME_LATIN] O'zbekistondagi zavodlar" OR "[PRODUCT_NAME_RUSSIAN] заводы в Узбекистане"
+       - "[PRODUCT_NAME_LATIN] ishlab chiqarish quvvati" OR "[PRODUCT_NAME_RUSSIAN] производственные мощности"
+       - "[PRODUCT_NAME_LATIN] O'zbekistondagi eng yaxshi ta'minotchi" OR "[PRODUCT_NAME_ENGLISH] best supplier in Uzbekistan"
+       - "[PRODUCT_NAME_LATIN] narxlar ro'yxati" OR "[PRODUCT_NAME_ENGLISH] price list"
+       - "[PRODUCT_NAME_LATIN] rasmiy sayt narxlar" OR "[PRODUCT_NAME_RUSSIAN] официальный сайт цены"
+       - "[PRODUCT_NAME_LATIN] yetkazib berish narxi" OR "[PRODUCT_NAME_ENGLISH] delivery cost"
+       - "[PRODUCT_NAME_LATIN] minimal buyurtma miqdori narx" OR "[PRODUCT_NAME_ENGLISH] minimum order quantity price"
+       - "[PRODUCT_NAME_LATIN] O'zbekistondagi eng arzon narx" OR "[PRODUCT_NAME_ENGLISH] cheapest price in Uzbekistan"
+       - "[PRODUCT_NAME_LATIN] real vaqtda narx" OR "[PRODUCT_NAME_ENGLISH] real-time price"
+       - "[PRODUCT_NAME_LATIN] O'zbekiston bozoridagi narxlar" OR "[PRODUCT_NAME_ENGLISH] Uzbekistan market prices"
+       - "[PRODUCT_NAME_LATIN] OAV ga ega ta'minotchilar" OR "[PRODUCT_NAME_ENGLISH] suppliers with reviews"
        
        **🌍 INTERNATIONAL ULTRA-COMPETITIVE SEARCH (Multilingual):**
-       - "[PRODUCT_NAME_ENGLISH] cheapest manufacturer China export price" OR "[PRODUCT_NAME_LATIN] arzon ishlab chiqaruvchi Xitoy eksport narxi"
+       - "[PRODUCT_NAME_ENGLISH] cheapest manufacturer China export price" OR "[PRODUCT_NAME_LATIN] азон ishlab chiqarувчи Xitoy eksport narxi"
        - "[PRODUCT_NAME_ENGLISH] lowest price factory China wholesale" OR "[PRODUCT_NAME_RUSSIAN] самая низкая цена завод Китай опт"
-       - "[PRODUCT_NAME_ENGLISH] bulk discount China manufacturer contact" OR "[PRODUCT_NAME_LATIN] ulgurji chegirma Xitoy ishlab chiqaruvchi kontakt"
+       - "[PRODUCT_NAME_ENGLISH] bulk discount China manufacturer contact" OR "[PRODUCT_NAME_LATIN] ulgurji chegirma Xitoy ishlab chiqarувчи kontakt"
        - "[PRODUCT_NAME_ENGLISH] wholesale supplier Turkey best price" OR "[PRODUCT_NAME_CYRILLIC] оптовый поставщик Турция лучшая цена"
-       - "[PRODUCT_NAME_ENGLISH] factory direct Russia export cheap" OR "[PRODUCT_NAME_LATIN] zavod to'g'ridan-to'g'ri Rossiya eksport arzon"
+       - "[PRODUCT_NAME_ENGLISH] factory direct Russia export cheap" OR "[PRODUCT_NAME_LATIN] zavod to'г'ridan-to'г'ри Rossiya eksport азон"
        - "[PRODUCT_NAME_ENGLISH] manufacturer India lowest cost export" OR "[PRODUCT_NAME_RUSSIAN] производитель Индия самые низкие расходы экспорт"
-       - "[PRODUCT_NAME_ENGLISH] producer Iran competitive price export" OR "[PRODUCT_NAME_LATIN] ishlab chiqaruvchi Eron raqobatbardosh narx eksport"
+       - "[PRODUCT_NAME_ENGLISH] producer Iran competitive price export" OR "[PRODUCT_NAME_LATIN] ishlab chiqarувчи Eron raqobatbardosh narx eksport"
        - "[PRODUCT_NAME_ENGLISH] wholesale Belarus Kazakhstan cheap" OR "[PRODUCT_NAME_CYRILLIC] опт Беларусь Казахстан дешево"
-       - "[PRODUCT_NAME_ENGLISH] direct manufacturer price list export" OR "[PRODUCT_NAME_LATIN] ishlab chiqaruvchi zavoddan narx ro'yxati eksport"
-       - "[PRODUCT_NAME_ENGLISH] B2B wholesale platform cheap price" OR "[PRODUCT_NAME_LATIN] B2B ulgurji platforma arzon narx"
+       - "[PRODUCT_NAME_ENGLISH] direct manufacturer price list export" OR "[PRODUCT_NAME_LATIN] ishlab chiqarувчи zavoddan narx ro'yxati eksport"
+       - "[PRODUCT_NAME_ENGLISH] B2B wholesale platform cheap price" OR "[PRODUCT_NAME_LATIN] B2B ulgurji platforma азон narx"
        - "[PRODUCT_NAME_ENGLISH] Alibaba cheapest supplier contact" OR "[PRODUCT_NAME_CYRILLIC] Alibaba самый дешевый поставщик контакт"
-       - "[PRODUCT_NAME_ENGLISH] Made-in-China lowest price manufacturer" OR "[PRODUCT_NAME_LATIN] Made-in-China eng arzon narx ishlab chiqaruvchi"
+       - "[PRODUCT_NAME_ENGLISH] Made-in-China lowest price manufacturer" OR "[PRODUCT_NAME_LATIN] Made-in-China eng азон narx ishlab chiqarувчи"
+       - "[PRODUCT_NAME_ENGLISH] global wholesale supplier directory" OR "[PRODUCT_NAME_RUSSIAN] каталог мировых оптовых поставщиков"
+       - "[PRODUCT_NAME_ENGLISH] international trade platform" OR "[PRODUCT_NAME_LATIN] xalqaro savdo platformasi"
+       - "[PRODUCT_NAME_ENGLISH] global sourcing agent" OR "[PRODUCT_NAME_LATIN] global ta'minot agenti"
+       - "[PRODUCT_NAME_ENGLISH] trade company export" OR "[PRODUCT_NAME_RUSSIAN] торговая компания экспорт"
+       - "[PRODUCT_NAME_ENGLISH] price list catalog export" OR "[PRODUCT_NAME_LATIN] narxlar katalogi eksport"
+       - "[PRODUCT_NAME_ENGLISH] international supplier directory with prices" OR "[PRODUCT_NAME_RUSSIAN] международный каталог поставщиков с ценами"
+       - "[PRODUCT_NAME_ENGLISH] FOB CIF price comparison" OR "[PRODUCT_NAME_LATIN] FOB CIF narx solishtirish"
+       - "[PRODUCT_NAME_ENGLISH] bulk order discount supplier" OR "[PRODUCT_NAME_RUSSIAN] оптовый заказ скидка поставщик"
+       - "[PRODUCT_NAME_ENGLISH] verified supplier with real prices" OR "[PRODUCT_NAME_LATIN] tasdiqlangan ta'minotchi haqiqiy narxlar bilan"
+       - "[PRODUCT_NAME_ENGLISH] supplier with product catalog and prices" OR "[PRODUCT_NAME_LATIN] mahsulot katalogi va narxlari bor ta'minotchi"
        
        **💰 AGGRESSIVE PRICE HUNTING STRATEGIES (Multilingual):**
-       - "[PRODUCT_NAME_ENGLISH] price comparison cheapest supplier" OR "[PRODUCT_NAME_LATIN] narx solishtirish eng arzon ta'minotchi"
+       - "[PRODUCT_NAME_ENGLISH] price comparison cheapest supplier" OR "[PRODUCT_NAME_LATIN] narx solishtirish азон ta'minotчи"
        - "[PRODUCT_NAME_ENGLISH] bulk order discount manufacturer" OR "[PRODUCT_NAME_RUSSIAN] скидка на оптовый заказ производитель"
        - "[PRODUCT_NAME_ENGLISH] wholesale price list catalog" OR "[PRODUCT_NAME_LATIN] ulgurji narx ro'yxati katalog"
        - "[PRODUCT_NAME_ENGLISH] clearance sale bulk purchase" OR "[PRODUCT_NAME_CYRILLIC] распродажа оптовая закупка"
-       - "[PRODUCT_NAME_ENGLISH] end of line stock cheap price" OR "[PRODUCT_NAME_LATIN] oxirgi partiyalar arzon narx"
+       - "[PRODUCT_NAME_ENGLISH] end of line stock cheap price" OR "[PRODUCT_NAME_LATIN] oxirgi partiyalar азон narx"
        - "[PRODUCT_NAME_ENGLISH] overstock liquidation sale" OR "[PRODUCT_NAME_RUSSIAN] ликвидация остатков распродажа"
-       - "[PRODUCT_NAME_ENGLISH] factory seconds B grade cheap" OR "[PRODUCT_NAME_LATIN] zavod sekundlari B daraja arzon"
+       - "[PRODUCT_NAME_ENGLISH] factory seconds B grade cheap" OR "[PRODUCT_NAME_LATIN] zavod sekundlari B daraja азон"
+       - "[PRODUCT_NAME_ENGLISH] seasonal discount supplier" OR "[PRODUCT_NAME_RUSSIAN] сезонная скидка поставщик"
+       - "[PRODUCT_NAME_ENGLISH] promotional pricing bulk" OR "[PRODUCT_NAME_LATIN] reklama narxlash ulgurji"
+       - "[PRODUCT_NAME_ENGLISH] off-season clearance" OR "[PRODUCT_NAME_LATIN] mavsum tashqari savdo"
+       - "[PRODUCT_NAME_ENGLISH] closeout merchandise" OR "[PRODUCT_NAME_RUSSIAN] товары с уценкой"
+       - "[PRODUCT_NAME_ENGLISH] last minute deals supplier" OR "[PRODUCT_NAME_LATIN] oxirgi daqiqadagi takliflar ta'minotchi"
+       - "[PRODUCT_NAME_ENGLISH] volume discount pricing" OR "[PRODUCT_NAME_LATIN] hajm chegirmasi narxlash"
+       - "[PRODUCT_NAME_ENGLISH] bulk purchase price calculator" OR "[PRODUCT_NAME_RUSSIAN] калькулятор оптовой покупки цены"
+       - "[PRODUCT_NAME_ENGLISH] quantity discount supplier" OR "[PRODUCT_NAME_LATIN] miqdor chegirma ta'minotchi"
+       - "[PRODUCT_NAME_ENGLISH] wholesale tier pricing" OR "[PRODUCT_NAME_RUSSIAN] оптовое ценовое тиражирование"
+       
+       **🏢 SUPPLIER VERIFICATION SEARCH PATTERNS:**
+       - "[COMPANY_NAME] official website" OR "[COMPANY_NAME] rasmiy veb-sayt"
+       - "[COMPANY_NAME] contact information phone email" OR "[COMPANY_NAME] kontakt ma'lumotlar telefon elektron pochta"
+       - "[COMPANY_NAME] business registration Uzbekistan" OR "[COMPANY_NAME] biznes ro'yxatga olish O'zbekiston"
+       - "[COMPANY_NAME] supplier credentials" OR "[COMPANY_NAME] ta'minotchi sertifikatlari"
+       - "[COMPANY_NAME] customer reviews rating" OR "[COMPANY_NAME] mijoz sharhlari reyting"
+       - "[COMPANY_NAME] factory location address" OR "[COMPANY_NAME] zavod manzili"
+       - "[COMPANY_NAME] export experience" OR "[COMPANY_NAME] eksport tajribasi"
+       - "[COMPANY_NAME] product catalog pdf" OR "[COMPANY_NAME] mahsulot katalogi pdf"
+       - "[COMPANY_NAME] quality certificates" OR "[COMPANY_NAME] sifat sertifikatlari"
+       - "[COMPANY_NAME] years in business" OR "[COMPANY_NAME] biznes yillari"
+       - "[COMPANY_NAME] delivery time guarantee" OR "[COMPANY_NAME] yetkazib berish kafolati"
+       - "[COMPANY_NAME] payment terms" OR "[COMPANY_NAME] to'lov shartlari"
+       - "[COMPANY_NAME] company profile" OR "[COMPANY_NAME] kompaniya profili"
+       - "[COMPANY_NAME] business license" OR "[COMPANY_NAME] biznes litsenziya"
+       - "[COMPANY_NAME] tax identification number" OR "[COMPANY_NAME] soliq identifikatsiya raqami"
+       - "[COMPANY_NAME] product price list" OR "[COMPANY_NAME] mahsulot narx ro'yxati"
+       - "[COMPANY_NAME] minimum order quantity" OR "[COMPANY_NAME] minimal buyurtma miqdori"
+       - "[COMPANY_NAME] shipping terms" OR "[COMPANY_NAME] yetkazib berish shartlari"
+       - "[COMPANY_NAME] warranty policy" OR "[COMPANY_NAME] kafolat siyosati"
 
     **Input Data:**
     ---
@@ -143,7 +351,7 @@ const createSourcingPrompt = (tenderText: string, hasFiles: boolean, platform: P
     Your PRIMARY mission is to find the ABSOLUTE CHEAPEST suppliers that can deliver quality products. Follow this hierarchy:
     
     **PRICE PRIORITY RANKING:**
-    1. **ERSHEY Direct Manufacturers** (Highest Priority - Cheapest prices)
+    1. **🏭 Direct Manufacturers** (Highest Priority - Cheapest prices)
     2. **📦 Wholesale/Bulk Suppliers** (High Priority - Volume discounts)
     3. **🏢 Official Distributors** (Medium Priority - Competitive prices)
     4. **🏪 Authorized Resellers** (Low Priority - Higher markups)
@@ -154,13 +362,26 @@ const createSourcingPrompt = (tenderText: string, hasFiles: boolean, platform: P
     - Check for special offers, clearance sales, or promotions
     - Compare FOB, CIF, and delivered prices
     - Verify minimum order quantities for best pricing
+    - Check for seasonal pricing variations
+    - Look for package deals or bundled pricing
     
     **COST OPTIMIZATION SEARCH TERMS (Multilingual):**
-    - "[PRODUCT_NAME_ENGLISH] FOB price factory direct" OR "[PRODUCT_NAME_LATIN] FOB narx zavod to'g'ridan-to'g'ri"
+    - "[PRODUCT_NAME_ENGLISH] FOB price factory direct" OR "[PRODUCT_NAME_LATIN] FOB narx zavod to'г'ridan-to'г'ри"
     - "[PRODUCT_NAME_ENGLISH] CIF price Uzbekistan import" OR "[PRODUCT_NAME_CYRILLIC] CIF цена Узбекистан импорт"
     - "[PRODUCT_NAME_ENGLISH] bulk order minimum quantity price" OR "[PRODUCT_NAME_LATIN] ulgurji buyurtma minimal miqdor narx"
     - "[PRODUCT_NAME_ENGLISH] wholesale price volume discount" OR "[PRODUCT_NAME_RUSSIAN] оптовая цена скидка по объему"
-    - "[PRODUCT_NAME_ENGLISH] ex-works price manufacturer" OR "[PRODUCT_NAME_LATIN] ishlab chiqaruvchi zavoddan narx"
+    - "[PRODUCT_NAME_ENGLISH] ex-works price manufacturer" OR "[PRODUCT_NAME_LATIN] ishlab chiqarувчи zavoddan narx"
+    - "[PRODUCT_NAME_ENGLISH] landed cost calculation" OR "[PRODUCT_NAME_RUSSIAN] расчет landed cost"
+    - "[PRODUCT_NAME_ENGLISH] total cost of ownership" OR "[PRODUCT_NAME_LATIN] umumiy egalik narxi"
+    - "[PRODUCT_NAME_ENGLISH] shipping cost estimate" OR "[PRODUCT_NAME_LATIN] yetkazib berish narxi taxmini"
+    - "[PRODUCT_NAME_ENGLISH] customs duty calculator" OR "[PRODUCT_NAME_RUSSIAN] калькулятор таможенных пошлин"
+    - "[PRODUCT_NAME_ENGLISH] import taxes Uzbekistan" OR "[PRODUCT_NAME_LATIN] O'zbekistonga import soliqlari"
+    - "[PRODUCT_NAME_ENGLISH] duty free import options" OR "[PRODUCT_NAME_LATIN] bojxona to'lovsiz import variantlari"
+    - "[PRODUCT_NAME_ENGLISH] tax optimization import" OR "[PRODUCT_NAME_LATIN] soliqlarni optimallashtirish import"
+    - "[PRODUCT_NAME_ENGLISH] import duty calculator Uzbekistan" OR "[PRODUCT_NAME_LATIN] O'zbekistonga import bojosi kalkulyator"
+    - "[PRODUCT_NAME_ENGLISH] shipping cost comparison" OR "[PRODUCT_NAME_RUSSIAN] сравнение стоимости доставки"
+    - "[PRODUCT_NAME_ENGLISH] logistics cost optimization" OR "[PRODUCT_NAME_LATIN] logistika narxlarini optimallashtirish"
+    - "[PRODUCT_NAME_ENGLISH] supply chain cost analysis" OR "[PRODUCT_NAME_RUSSIAN] анализ затрат цепочки поставок"
     
     **🔍 ENHANCED DATA VERIFICATION + PRICE OPTIMIZATION:**
     For EACH supplier, perform comprehensive verification AND price optimization:
@@ -174,7 +395,20 @@ const createSourcingPrompt = (tenderText: string, hasFiles: boolean, platform: P
        - Promotional pricing and special offers
        - Bulk order pricing matrices
        - Export/import price terms (FOB/CIF)
+       - Seasonal or periodic discount programs
+       - Real-time price comparisons from multiple suppliers
+       - Current market pricing trends
     4. **Cost Comparison:** Cross-reference prices from multiple suppliers for same product
+    5. **Quality Verification:** Search for "[COMPANY_NAME] product quality certification" or "[COMPANY_NAME] customer reviews"
+    6. **Reliability Check:** Search for "[COMPANY_NAME] business years experience" or "[COMPANY_NAME] delivery time"
+    7. **Financial Stability Check:** Search for "[COMPANY_NAME] financial reports" or "[COMPANY_NAME] credit rating"
+    8. **Compliance Verification:** Search for "[COMPANY_NAME] industry certifications" or "[COMPANY_NAME] regulatory compliance"
+    9. **Capacity Verification:** Search for "[COMPANY_NAME] production capacity" or "[COMPANY_NAME] monthly output"
+    10. **Geographic Proximity Analysis:** Consider shipping costs and delivery times based on supplier location
+    11. **Direct Product Verification:** Search for "[COMPANY_NAME] [PRODUCT_NAME] official product page" to verify they actually sell this product
+    12. **Price Transparency Check:** Verify that prices are clearly listed on official websites or catalogs
+    13. **Minimum Order Quantity Verification:** Confirm the minimum order quantities and their corresponding prices
+    14. **Shipping Terms Verification:** Check for specific shipping terms, delivery times, and costs
     
     **DATA EXTRACTION RULES (ZERO TOLERANCE FOR FAKE DATA):**
     - **supplierName**: EXACT company name from official sources
@@ -187,6 +421,11 @@ const createSourcingPrompt = (tenderText: string, hasFiles: boolean, platform: P
     - **contactPerson**: Sales manager name if available, otherwise "Ma'lumot topilmadi"
     - **availability**: Include stock status, lead times, minimum orders
     - **reasoning**: Detail your price discovery method and why this supplier offers competitive pricing
+    - **country**: Country of the supplier (for international suppliers)
+    - **pricingDetails**: Specific pricing information including currency, unit of measure, and any applicable terms (FOB, CIF, etc.)
+    - **deliveryTime**: Exact delivery time in days or weeks
+    - **minimumOrder**: Minimum order quantity with corresponding price
+    - **paymentTerms**: Payment terms such as advance payment, credit terms, etc.
     
     **🚀 AGGRESSIVE SEARCH EXECUTION STRATEGY:**
     1. **Multi-Source Price Discovery**: Search 5-10 different suppliers per product category
@@ -197,6 +436,18 @@ const createSourcingPrompt = (tenderText: string, hasFiles: boolean, platform: P
     6. **Market Intelligence**: Check for seasonal pricing, promotions, clearance sales
     7. **Quality vs Cost Balance**: Ensure cheapest options still meet quality requirements
     8. **Lead Time Optimization**: Factor delivery time into total cost equation
+    9. **Supplier Reliability Assessment**: Verify supplier track record and customer feedback
+    10. **Compliance Verification**: Check if suppliers meet industry standards and certifications
+    11. **Financial Stability Check**: Verify supplier's financial health and longevity
+    12. **Alternative Supplier Identification**: Find backup suppliers for critical items
+    13. **Price Trend Analysis**: Check historical price trends to identify best buying opportunities
+    14. **Seasonal Pricing Patterns**: Identify seasonal discounts or price fluctuations
+    15. **Competitive Landscape Mapping**: Understand the supplier's position in the market
+    16. **Real-Time Price Verification**: Use multiple search queries to verify current pricing
+    17. **Direct Supplier Contact**: Attempt to verify information through direct contact when possible
+    18. **Cross-Platform Verification**: Verify information across multiple platforms and sources
+    19. **Price Transparency Focus**: Prioritize suppliers with clear, published pricing
+    20. **Market Benchmarking**: Compare prices against market averages and benchmarks
     
     **WINNING STRATEGY FOCUS:**
     Your goal is to find supplier combinations that will allow the client to submit the MOST COMPETITIVE bid possible while maintaining acceptable profit margins. Every dollar saved in sourcing directly increases win probability.
@@ -231,7 +482,8 @@ const createSourcingPrompt = (tenderText: string, hasFiles: boolean, platform: P
         "supplierType": "Ishlab chiqaruvchi | Rasmiy Distributor | Opt sotuvchi | Reseller | Noma'lum",
         "trustScore": "number (1-10 based on website quality and information)",
         "reliabilityFactors": ["string (based on search findings)"],
-        "priceComment": "string (source of price information)"
+        "priceComment": "string (source of price information)",
+        "country": "string (for domestic suppliers, use 'Uzbekistan')"
       }],
       "foreignSourcingRecommendations": [{
         "supplierName": "string", "price": "string", "availability": "string", "website": "string", "phone": "string", "address": "string", "country": "string", "reasoning": "string", "contactPerson": "string", "email": "string", "isKeyRecommendation": false,
@@ -480,6 +732,53 @@ export async function findSourcingOptions(data: TenderData, platform: Platform):
     let hasFiles = false;
     const modelParts: any[] = [];
 
+    // First, let's try to use Google Custom Search to find suppliers directly
+    try {
+        console.log("Attempting to use Google Custom Search API for supplier discovery...");
+        
+        // Extract product name from tender text for search
+        let productName = "";
+        if (tenderText) {
+            // Simple extraction of potential product name (this could be enhanced)
+            const lines = tenderText.split('\n');
+            // Look for lines that might contain product names
+            for (const line of lines) {
+                if (line.length > 10 && line.length < 100 && 
+                    !line.includes('tender') && 
+                    !line.includes('Tender') &&
+                    !line.includes('ariza') &&
+                    !line.includes('Ariza')) {
+                    productName = line.trim();
+                    break;
+                }
+            }
+        }
+        
+        if (productName) {
+            console.log("Searching for suppliers using Google Custom Search API for product:", productName);
+            
+            // Use our custom search utility to find suppliers
+            const suppliers = await googleCustomSearch.findSuppliers(productName);
+            console.log("Found", suppliers.length, "potential suppliers");
+            
+            // Add this information to the tender text to help the AI
+            if (suppliers.length > 0) {
+                tenderText += "\n\n[GOOGLE SEARCH RESULTS FOR SUPPLIERS]\n";
+                tenderText += "The following potential suppliers were found through Google Custom Search:\n";
+                suppliers.forEach((supplier, index) => {
+                    tenderText += `${index + 1}. ${supplier.title} - ${supplier.url}\n`;
+                    tenderText += `   Snippet: ${supplier.snippet.substring(0, 100)}...\n`;
+                    if (supplier.hasContactInfo) {
+                        tenderText += "   (Likely contains contact information)\n";
+                    }
+                    tenderText += "\n";
+                });
+            }
+        }
+    } catch (searchError) {
+        console.warn("Google Custom Search API failed, falling back to AI search:", searchError);
+    }
+
     if (files && files.length > 0) {
         hasFiles = true;
         for (const file of files) {
@@ -487,18 +786,22 @@ export async function findSourcingOptions(data: TenderData, platform: Platform):
             modelParts.push({ inlineData: { mimeType: file.type, data: base64 } });
         }
         // Extract text from files to use for analysis
-        const textExtractionResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: { parts: [...modelParts, { text: 'Extract all text content from all provided documents. Combine the text into a single block.' }] }
+        const textExtractionResponse = await retryWithBackoff(async () => {
+            return await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: { parts: [...modelParts, { text: 'Extract all text content from all provided documents. Combine the text into a single block.' }] }
+            });
         });
         tenderText = textExtractionResponse.text;
     } else if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
         // Handle URL in text field (for discovered tenders)
         const textExtractionPrompt = `Use your search tool to access and return the FULL text content of this URL: ${text}`;
-        const response = await ai.models.generateContent({ 
-            model: "gemini-2.5-flash", 
-            contents: textExtractionPrompt, 
-            config: { tools: [{ googleSearch: {} }] } 
+        const response = await retryWithBackoff(async () => {
+            return await ai.models.generateContent({ 
+                model: "gemini-2.5-flash", 
+                contents: textExtractionPrompt, 
+                config: { tools: [{ googleSearch: {} }] } 
+            });
         });
         tenderText = response.text;
     } else if (!text) {
@@ -526,9 +829,11 @@ export async function findSourcingOptions(data: TenderData, platform: Platform):
     `;
     
     try {
-        const productResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: productExtractionPrompt
+        const productResponse = await retryWithBackoff(async () => {
+            return await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: productExtractionPrompt
+            });
         });
         
         let productName = productResponse.text.trim();
@@ -546,9 +851,11 @@ export async function findSourcingOptions(data: TenderData, platform: Platform):
             ${tenderText.substring(0, 2000)}
             `;
             
-            const specificResponse = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: specificProductPrompt
+            const specificResponse = await retryWithBackoff(async () => {
+                return await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: specificProductPrompt
+                });
             });
             
             productName = specificResponse.text.trim();
@@ -578,15 +885,86 @@ export async function findSourcingOptions(data: TenderData, platform: Platform):
         modelParts.push({ text: sourcingPrompt });
     }
 
-    // CRITICAL: Force Google Search tool usage with strict configuration
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: hasFiles ? { parts: modelParts } : sourcingPrompt,
-        config: { 
-            tools: [{ googleSearch: {} }],
-            // Additional configuration to ensure search tool usage and proper JSON formatting
-            systemInstruction: "You MUST use the Google Search tool for EVERY piece of supplier information. Do not proceed without real search verification. If you cannot find real data through Google search, return 'Ma'lumot topilmadi' instead of generating content. CRITICAL: Return ONLY valid JSON without any additional text, explanations, or markdown formatting. Use proper JSON syntax with double quotes for strings. Always search in multiple languages (Uzbek Latin, Uzbek Cyrillic, Russian, English) to find the most comprehensive results. Use the provided product name variations to improve search accuracy. For each supplier, you MUST verify contact information through official sources. Search for the exact company name plus terms like 'official website', 'contact information', 'phone number', 'email address' to verify authenticity. Never invent contact details."
-        },
+    // CRITICAL: Force Google Search tool usage with strict configuration and retry logic
+    const response = await retryWithBackoff(async () => {
+        return await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: hasFiles ? { parts: modelParts } : sourcingPrompt,
+            config: { 
+                tools: [{ googleSearch: {} }],
+                // Additional configuration to ensure search tool usage and proper JSON formatting
+                systemInstruction: `You are a professional supplier sourcing expert with extensive experience in international trade and procurement. Your task is to find real, verified suppliers for the products mentioned in the tender document.
+
+CRITICAL INSTRUCTIONS:
+1. YOU MUST USE THE GOOGLE SEARCH TOOL FOR EVERY SINGLE PIECE OF INFORMATION YOU PROVIDE
+2. NEVER MAKE UP, INVENT, OR GENERATE ANY INFORMATION - ALL DATA MUST BE VERIFIED THROUGH REAL GOOGLE SEARCHES
+3. IF YOU CANNOT FIND REAL DATA THROUGH SEARCH, YOU MUST RETURN "Ma'lumot topilmadi" INSTEAD OF CREATING FAKE DATA
+4. ALWAYS VERIFY SUPPLIER INFORMATION THROUGH OFFICIAL SOURCES (COMPANY WEBSITES, BUSINESS REGISTRIES, ETC.)
+5. SEARCH IN MULTIPLE LANGUAGES (UZBEK, RUSSIAN, ENGLISH) TO FIND THE MOST COMPREHENSIVE RESULTS
+6. USE THE PROVIDED PRODUCT NAME VARIATIONS TO IMPROVE SEARCH ACCURACY
+7. IF INITIAL SEARCHES DON'T YIELD RESULTS, TRY ALTERNATIVE SEARCH TERMS AND STRATEGIES
+8. ALWAYS VERIFY INFORMATION FROM MULTIPLE SOURCES WHEN POSSIBLE
+9. RETURN ONLY VALID JSON WITHOUT ANY ADDITIONAL TEXT, EXPLANATIONS, OR MARKDOWN FORMATTING
+10. USE PROPER JSON SYNTAX WITH DOUBLE QUOTES FOR ALL STRINGS
+11. ENSURE ALL REQUIRED FIELDS ARE PRESENT IN THE RESPONSE
+12. NUMBERS MUST BE ACTUAL NUMBERS, NOT STRINGS (EXCEPT FOR PRICES WHICH SHOULD BE STRINGS)
+13. BOOLEAN VALUES MUST BE true/false, NOT STRINGS
+14. ENSURE ALL PRICES ARE VERIFIED WITH MULTIPLE SOURCES AND INCLUDE CURRENCY
+15. VERIFY THAT ALL SUPPLIERS HAVE BEEN IN BUSINESS FOR AT LEAST 1 YEAR
+16. CONFIRM THAT ALL CONTACT INFORMATION IS CURRENT AND ACTIVE
+17. SEARCH FOR MULTIPLE SUPPLIERS PER CATEGORY TO ENSURE COMPETITIVE PRICING
+18. VERIFY SUPPLIER CAPACITY TO ENSURE THEY CAN FULFILL THE ORDER
+19. CHECK SUPPLIER REVIEWS AND RATINGS WHEN AVAILABLE
+20. ENSURE ALL PRICES INCLUDE RELEVANT TERMS (FOB, CIF, ETC.)
+
+SEARCH STRATEGY:
+1. FIRST, IDENTIFY THE EXACT PRODUCT/SERVICE NEEDED FROM THE TENDER
+2. CREATE MULTIPLE SEARCH VARIATIONS INCLUDING TYPOS AND ALTERNATIVE SPELLINGS
+3. SEARCH FOR SUPPLIERS IN UZBEKISTAN FIRST (DOMESTIC SOURCING)
+4. THEN SEARCH FOR INTERNATIONAL SUPPLIERS FROM COUNTRIES LIKE CHINA, TURKEY, INDIA, RUSSIA, SOUTH KOREA, GERMANY
+5. FOR EACH SUPPLIER, VERIFY THEIR EXISTENCE THROUGH OFFICIAL WEBSITES
+6. EXTRACT REAL CONTACT INFORMATION (PHONE, EMAIL, ADDRESS) FROM OFFICIAL SOURCES
+7. FIND VERIFIED PRICING INFORMATION FROM MULTIPLE SOURCES
+8. CHECK SUPPLIER CREDENTIALS, CERTIFICATIONS, AND CUSTOMER REVIEWS
+9. VERIFY SUPPLIER RELIABILITY AND DELIVERY CAPABILITIES
+10. COMPARE PRICES FROM MULTIPLE SUPPLIERS TO FIND THE MOST COMPETITIVE OPTIONS
+11. LOOK FOR SUPPLIERS WITH PROVEN EXPORT/IMPORT EXPERIENCE
+12. IDENTIFY SUPPLIERS WITH FLEXIBLE PAYMENT TERMS
+13. FIND SUPPLIERS WITH MULTIPLE COMMUNICATION CHANNELS
+14. VERIFY SUPPLIER CAPACITY TO HANDLE THE REQUIRED VOLUME
+15. CHECK FOR ANY NEGATIVE REVIEWS OR COMPLAINTS
+16. CONFIRM SUPPLIER HAS ADEQUATE PRODUCTION/DISTRIBUTION CAPACITY
+17. VERIFY SUPPLIER'S FINANCIAL STABILITY
+18. CHECK FOR INDUSTRY CERTIFICATIONS OR QUALITY STANDARDS
+19. VERIFY BUSINESS REGISTRATION AND LEGAL COMPLIANCE
+20. CONFIRM SUPPLIER HAS RELEVANT EXPERIENCE IN THE INDUSTRY
+
+VERIFICATION PROCESS:
+1. For each supplier, search for "[COMPANY_NAME] official website"
+2. Visit the official website to verify company information
+3. Look for contact pages with real phone numbers and email addresses
+4. Check for product catalogs or price lists
+5. Search for "[COMPANY_NAME] customer reviews" or "[COMPANY_NAME] ratings"
+6. Verify business registration through official sources
+7. Check for industry certifications or quality standards
+8. Confirm export/import experience if relevant
+9. Verify company has been in business for at least 1 year
+10. Check for recent business activity (news, social media, etc.)
+11. Confirm contact information is current and responsive
+12. Verify pricing information with multiple sources
+13. Check for any negative reviews or complaints
+14. Confirm supplier has adequate production/distribution capacity
+15. Verify supplier's financial stability through available information
+16. Check for compliance with relevant industry regulations
+17. Confirm supplier has experience with similar orders
+18. Verify supplier's ability to meet delivery timelines
+19. Check for flexible payment terms and conditions
+20. Confirm supplier has adequate insurance coverage
+
+RETURN FORMAT:
+Return ONLY a valid JSON object with the exact structure specified in the prompt. Do not include any additional text, explanations, or markdown formatting.`
+            },
+        });
     });
 
     try {
@@ -698,7 +1076,7 @@ export async function generateFinalAnalysis(tenderText: string, platform: Platfo
                 seed: 42,
                 // Search might still be needed for competitor analysis etc.
                 tools: [{ googleSearch: {} }],
-                systemInstruction: "You MUST return ONLY valid JSON without any additional text, explanations, or markdown formatting. Use proper JSON syntax with double quotes for all strings. Ensure all required fields are present in the response."
+                systemInstruction: "You MUST return ONLY valid JSON without any additional text, explanations, or markdown formatting. Use proper JSON syntax with double quotes for all strings. Ensure all required fields are present in the response. All prices must include currency (UZS, USD, etc.). All percentages must be represented as numbers (e.g., 15.5, not 15.5%). All dates must be in ISO format (YYYY-MM-DD). All numerical values must be actual numbers, not strings."
             },
         });
         
@@ -824,7 +1202,7 @@ export async function continueChat(context: AnalysisContext, history: ChatMessag
     // Remove the last user message from history as it will be the new prompt
     const userPrompt = chatHistory.pop()?.parts[0].text || '';
 
-    const systemInstruction = `You are a helpful assistant for analyzing procurement tenders. The user has already received a full analysis from you. They are now asking follow-up questions. Use the provided context (original tender text and your previous analysis) to answer their questions accurately and concisely. Keep answers brief and to the point.
+    const systemInstruction = `You are a helpful assistant for analyzing procurement tenders. The user has already received a full analysis from you. They are now asking follow-up questions. Use the provided context (original tender text and your previous analysis) to answer their questions accurately and concisely. Keep answers brief and to the point. If you need to verify any information, use the Google Search tool. All information must be accurate and based on the provided context or verified through search.
     ---
     ORIGINAL TENDER TEXT: ${context.originalTenderText}
     ---
@@ -837,30 +1215,92 @@ export async function continueChat(context: AnalysisContext, history: ChatMessag
         history: chatHistory,
         config: {
             systemInstruction: systemInstruction,
+            tools: [{googleSearch: {}}]
         },
     });
     
-    const response = await chat.sendMessage({ message: userPrompt });
+    // Use retry logic for more reliable results
+    const response = await retryWithBackoff(async () => {
+        return await chat.sendMessage({ message: userPrompt });
+    });
 
     return response.text;
 }
 
 export async function getCustomerInfo(customerName: string): Promise<GenerateContentResponse> {
-    const prompt = `Provide a detailed business profile for the company "${customerName}". Focus on:
+    // First, try to get information using Google Custom Search
+    try {
+        console.log("Attempting to use Google Custom Search API for customer info:", customerName);
+        
+        const companyInfo = await googleCustomSearch.getCompanyInfo(customerName);
+        
+        // If we found information, we can enhance the prompt with it
+        let additionalInfo = "";
+        if (companyInfo.info.length > 0 || companyInfo.reviews.length > 0) {
+            additionalInfo = "\n\n[GOOGLE SEARCH RESULTS FOR COMPANY]\n";
+            additionalInfo += "The following information was found through Google Custom Search:\n\n";
+            
+            if (companyInfo.info.length > 0) {
+                additionalInfo += "Company Information:\n";
+                companyInfo.info.slice(0, 3).forEach((item, index) => {
+                    additionalInfo += `${index + 1}. ${item.title} - ${item.link}\n`;
+                    additionalInfo += `   Snippet: ${item.snippet.substring(0, 100)}...\n\n`;
+                });
+            }
+            
+            if (companyInfo.reviews.length > 0) {
+                additionalInfo += "Customer Reviews/Ratings:\n";
+                companyInfo.reviews.slice(0, 3).forEach((item, index) => {
+                    additionalInfo += `${index + 1}. ${item.title} - ${item.link}\n`;
+                    additionalInfo += `   Snippet: ${item.snippet.substring(0, 100)}...\n\n`;
+                });
+            }
+        }
+        
+        const prompt = `Provide a detailed business profile for the company "${customerName}". Focus on:
+1.  **Core Business & Product Range:** What do they primarily sell or manufacture?
+2.  **Market Reputation & Reviews:** Are they known for quality, low prices, or something else? Find any customer reviews or complaints.
+3.  **Pricing Strategy:** Based on your search, would you classify them as a premium, mid-range, or budget-friendly supplier?
+The goal is to deeply understand their position in the market. The answer must be in Uzbek.
+${additionalInfo}`;
+        
+        // Use retry logic for more reliable results
+        const response = await retryWithBackoff(async () => {
+            return await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: {
+                    tools: [{googleSearch: {}}],
+                    systemInstruction: "You are a professional business intelligence analyst. Your task is to research and provide accurate information about the company. You MUST use the Google Search tool to find verified information about the company. All information must be verified through official sources. Return ONLY the requested information without any additional text, explanations, or markdown formatting."
+                },
+            });
+        });
+
+        return response;
+    } catch (searchError) {
+        console.warn("Google Custom Search API failed for customer info, falling back to AI search:", searchError);
+        
+        // Fallback to original implementation
+        const prompt = `Provide a detailed business profile for the company "${customerName}". Focus on:
 1.  **Core Business & Product Range:** What do they primarily sell or manufacture?
 2.  **Market Reputation & Reviews:** Are they known for quality, low prices, or something else? Find any customer reviews or complaints.
 3.  **Pricing Strategy:** Based on your search, would you classify them as a premium, mid-range, or budget-friendly supplier?
 The goal is to deeply understand their position in the market. The answer must be in Uzbek.`;
-    
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        tools: [{googleSearch: {}}],
-      },
-    });
+        
+        // Use retry logic for more reliable results
+        const response = await retryWithBackoff(async () => {
+            return await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: {
+                    tools: [{googleSearch: {}}],
+                    systemInstruction: "You are a professional business intelligence analyst. Your task is to research and provide accurate information about the company. You MUST use the Google Search tool to find verified information about the company. All information must be verified through official sources. Return ONLY the requested information without any additional text, explanations, or markdown formatting."
+                },
+            });
+        });
 
-    return response;
+        return response;
+    }
 }
 
 const createContractAnalysisPrompt = (fileNames: string[]) => {
@@ -970,13 +1410,17 @@ export async function analyzeContract(files: File[]): Promise<Omit<ContractAnaly
     const prompt = createContractAnalysisPrompt(fileNames);
     modelParts.push({ text: prompt });
 
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: { parts: modelParts },
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: contractAnalysisSchema,
-        },
+    // Use retry logic for more reliable results
+    const response = await retryWithBackoff(async () => {
+        return await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: { parts: modelParts },
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: contractAnalysisSchema,
+                systemInstruction: "You are a professional legal contract analyst. Your task is to analyze the provided contract documents and extract the required information. Use the Google Search tool if needed to verify legal terms or find relevant precedents. All information must be accurate and based on the contract content. Return ONLY valid JSON without any additional text, explanations, or markdown formatting."
+            },
+        });
     });
 
     try {
@@ -990,6 +1434,82 @@ export async function analyzeContract(files: File[]): Promise<Omit<ContractAnaly
 }
 
 export async function discoverTenders(keywords: string, region: string, industry: string, platform?: string): Promise<DiscoveredTender[]> {
+    // First, try to use Google Custom Search to find tenders directly
+    try {
+        console.log("Attempting to use Google Custom Search API for tender discovery...");
+        console.log("Keywords:", keywords, "Region:", region, "Industry:", industry);
+        
+        // Build search query
+        let searchQuery = "";
+        if (keywords) searchQuery += `${keywords} `;
+        if (industry) searchQuery += `${industry} `;
+        if (region) searchQuery += `${region} `;
+        searchQuery += "tender";
+        
+        // Use our custom search utility to find tenders
+        const tenders = await googleCustomSearch.findTenders(searchQuery, region);
+        console.log("Found", tenders.length, "potential tenders through Google Custom Search");
+        
+        // If we found tenders through Google Search, use them
+        if (tenders.length > 0) {
+            // Convert to the expected format
+            const discoveredTenders: DiscoveredTender[] = tenders.slice(0, 5).map(tender => ({
+                title: tender.title.substring(0, 100), // Limit length
+                customer: "Aniqlanmagan", // We would need to extract this from the tender
+                startPrice: "Aniqlanmagan",
+                deadline: "Aniqlanmagan",
+                platform: platform || "xarid.uzex.uz", // Default to main platform
+                url: tender.url
+            }));
+            
+            // Try to extract more detailed information from the tender pages
+            for (const discoveredTender of discoveredTenders) {
+                try {
+                    // Use AI to extract details from the tender URL
+                    const extractionPrompt = `Visit this tender URL: ${discoveredTender.url}
+                    Extract the following information in Uzbek:
+                    1. Customer/organization name
+                    2. Starting price (with currency)
+                    3. Submission deadline
+                    
+                    Return ONLY a JSON object with these fields:
+                    {
+                      "customer": "customer name",
+                      "startPrice": "price with currency",
+                      "deadline": "deadline"
+                    }`;
+                    
+                    const extractionResponse = await retryWithBackoff(async () => {
+                        return await ai.models.generateContent({
+                            model: "gemini-2.5-flash",
+                            contents: extractionPrompt,
+                            config: {
+                                tools: [{googleSearch: {}}],
+                            },
+                        });
+                    });
+                    
+                    // Try to parse the extracted information
+                    try {
+                        const extractedInfo = JSON.parse(extractionResponse.text);
+                        if (extractedInfo.customer) discoveredTender.customer = extractedInfo.customer;
+                        if (extractedInfo.startPrice) discoveredTender.startPrice = extractedInfo.startPrice;
+                        if (extractedInfo.deadline) discoveredTender.deadline = extractedInfo.deadline;
+                    } catch (parseError) {
+                        console.warn("Failed to parse extracted tender info:", parseError);
+                    }
+                } catch (extractionError) {
+                    console.warn("Failed to extract detailed tender info:", extractionError);
+                }
+            }
+            
+            return discoveredTenders;
+        }
+    } catch (searchError) {
+        console.warn("Google Custom Search API failed for tender discovery, falling back to AI search:", searchError);
+    }
+    
+    // Fallback to original implementation
     const queryParts = [];
     if (keywords) queryParts.push(`kalit so'zlar: "${keywords}"`);
     if (region) queryParts.push(`hudud: "${region}"`);
@@ -1018,12 +1538,16 @@ export async function discoverTenders(keywords: string, region: string, industry
         }
     `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        tools: [{googleSearch: {}}],
-      },
+    // Use retry logic for more reliable results
+    const response = await retryWithBackoff(async () => {
+        return await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                tools: [{googleSearch: {}}],
+                systemInstruction: "You are a professional tender discovery agent. Your task is to find real, active tenders in Uzbekistan. You MUST use the Google Search tool to find current tender announcements. Verify that all tenders are currently active and not closed. All information must be verified through official sources. Return ONLY valid JSON without any additional text, explanations, or markdown formatting."
+            },
+        });
     });
     
     try {
@@ -1142,15 +1666,20 @@ export async function generateDashboardInsights(tenders: AnalysisResult[]): Prom
         }
     };
 
-    try {
-        const response = await ai.models.generateContent({
+    // Use retry logic for more reliable results
+    const response = await retryWithBackoff(async () => {
+        return await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt,
             config: {
                 responseMimeType: 'application/json',
-                responseSchema: insightSchema
+                responseSchema: insightSchema,
+                systemInstruction: "You are a professional business intelligence analyst. Your task is to analyze the tender portfolio and generate insights. Use the Google Search tool if needed to find market trends or competitive intelligence. All information must be accurate and relevant. Return ONLY valid JSON without any additional text, explanations, or markdown formatting."
             }
         });
+    });
+    
+    try {
         const jsonText = response.text;
         const result: AIInsight[] = JSON.parse(jsonText);
         return result;
@@ -1209,15 +1738,20 @@ export async function generateVisionaryInsights(tenders: AnalysisResult[]): Prom
         required: ['trendAnalyzer', 'innovationAI', 'futureTechAI', 'summary']
     };
     
-    try {
-        const response = await ai.models.generateContent({
+    // Use retry logic for more reliable results
+    const response = await retryWithBackoff(async () => {
+        return await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt,
             config: {
                 responseMimeType: 'application/json',
                 responseSchema: visionaryInsightSchema,
+                systemInstruction: "You are a council of AI visionaries providing strategic advice. Your task is to analyze the tender history and generate forward-looking insights. Use the Google Search tool if needed to find market trends or technological developments. All information must be accurate and relevant. Return ONLY valid JSON without any additional text, explanations, or markdown formatting."
             }
         });
+    });
+    
+    try {
         const jsonText = response.text;
         const result: VisionaryInsight = JSON.parse(jsonText);
         return result;
@@ -1225,4 +1759,4 @@ export async function generateVisionaryInsights(tenders: AnalysisResult[]): Prom
         console.error("Failed to generate visionary insights:", error);
         return null;
     }
-}
+}   

@@ -15,6 +15,7 @@ import ChatInterface from './components/ChatInterface';
 import ProfileSettings from './components/ProfileSettings';
 import CompetitorsView from './components/CompetitorsView';
 import ContractsView from './components/ContractsView';
+import GoogleSearchTest from './components/GoogleSearchTest';
 import { ErrorIcon, LogoIcon, BotIcon } from './components/Icons';
 
 export type AppView = 'dashboard' | 'input' | 'loadingSourcing' | 'sourcingSelection' | 'loadingAnalysis' | 'results' | 'analytics' | 'sharedReport' | 'profile' | 'competitors' | 'contracts' | 'loadingContract';
