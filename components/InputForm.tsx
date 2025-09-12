@@ -4,7 +4,7 @@ import type { TenderData, Platform } from '../types';
 import { Platform as PlatformEnum } from '../types';
 import { UploadIcon, FileIcon, XIcon, AnalyzeIcon, InfoIcon, PlusIcon, TrashIcon } from './Icons';
 import { InfoTooltip } from './Card';
-
+import { t } from '../utils/translations';
 
 interface InputFormProps {
   onStartAnalysis: (data: TenderData, platform: Platform) => void;
@@ -123,10 +123,10 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
       {/* Header */}
       <div className="relative z-10 text-center mb-8">
         <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-gradient-from to-brand-gradient-to mb-4">
-          AI-Broker Elite Tahlil Tizimi
+          {t('ai-broker-elite-analysis-system')}
         </h1>
         <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-          Eng ilgʻor AI texnologiyasi bilan tenderlaringizni tahlil qiling va raqobatchilardan ustun keling
+          {t('ai-broker-elite-analysis-system-description')}
         </p>
       </div>
 
@@ -137,15 +137,15 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
                         <input type="file" id="file-upload" className="hidden" onChange={handleFileChange} accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt,image/*" ref={fileInputRef} multiple/>
                         <label htmlFor="file-upload" className="flex flex-col items-center justify-center text-text-secondary cursor-pointer">
                           <UploadIcon />
-                          <p className="mt-2 font-semibold">Fayllarni tanlang yoki bu yerga torting</p>
-                          <p className="text-sm mt-1">Hujjatlar, texnik xususiyatlar, shartnomalar</p>
-                          <span className="mt-4 text-sm font-bold text-text-primary bg-surface-light px-4 py-2 rounded-md">Fayl Tanlash</span>
+                          <p className="mt-2 font-semibold">{t('file-upload-instruction')}</p>
+                          <p className="text-sm mt-1">{t('file-upload-subtitle')}</p>
+                          <span className="mt-4 text-sm font-bold text-text-primary bg-surface-light px-4 py-2 rounded-md">{t('file-upload-button')}</span>
                         </label>
                     </div>
 
                     {files.length > 0 && (
                         <div className="mt-4 space-y-2 animate-fade-in">
-                            <h3 className="font-semibold text-text-secondary">Tanlangan fayllar:</h3>
+                            <h3 className="font-semibold text-text-secondary">{t('selected-files')}</h3>
                             {files.map((file, index) => (
                                 <div key={index} className="flex items-center justify-between bg-brand-primary/10 p-2 rounded-lg border border-brand-primary/20">
                                     <div className="flex items-center gap-3 min-w-0">
@@ -159,18 +159,18 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
                             ))}
                         </div>
                     )}
-                    <p className="text-xs text-text-secondary mt-2 text-center">.pdf, .doc(x), .xls(x), .txt, .png, .jpg (har biri max 10MB)</p>
+                    <p className="text-xs text-text-secondary mt-2 text-center">{t('file-upload-limit')}</p>
                 </>
         </div>
        
         <div className="mt-8 pt-6 border-t border-border">
-            <h2 className="text-xl font-bold text-center text-text-primary mb-4">Moliyaviy Sozlamalar</h2>
+            <h2 className="text-xl font-bold text-center text-text-primary mb-4">{t('financial-settings')}</h2>
 
             {/* VAT Toggle */}
             <div className="flex items-center justify-between bg-black/20 p-3 rounded-lg">
                 <label htmlFor="includeVat" className="flex items-center text-sm font-bold text-text-primary cursor-pointer">
-                    QQS bilan hisoblash
-                    <InfoTooltip text="Agar yoqilgan bo'lsa, narx hisob-kitoblariga Profil sozlamalarida ko'rsatilgan QQS foizi qo'shiladi. Agar o'chirilgan bo'lsa, QQS 0% deb hisoblanadi." />
+                    {t('vat-calculation')}
+                    <InfoTooltip text={t('vat-calculation-tooltip')} />
                 </label>
                 <label htmlFor="includeVat" className="flex items-center cursor-pointer">
                     <div className="relative">
@@ -185,11 +185,11 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
             <div className="mt-4">
                 <div className="flex items-center justify-between">
                     <h3 className="flex items-center text-sm font-bold text-text-primary">
-                        Qo'shimcha xarajatlar (bir martalik)
-                        <InfoTooltip text="Logistika, bojxona, sertifikatlash kabi tenderga xos bo'lgan qo'shimcha xarajatlarni qo'shing. Bu xarajatlar to'g'ridan-to'g'ri tannarxga qo'shiladi." />
+                        {t('additional-costs')}
+                        <InfoTooltip text={t('additional-costs-tooltip')} />
                     </h3>
                     <button type="button" onClick={addCostField} className="flex items-center gap-1 text-sm font-semibold text-brand-primary hover:text-brand-secondary">
-                        <PlusIcon /> Qo'shish
+                        <PlusIcon /> {t('add-cost')}
                     </button>
                 </div>
                 <div className="space-y-2 mt-2">
@@ -197,14 +197,14 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
                         <div key={index} className="flex items-center gap-2 p-2 bg-black/20 rounded-lg">
                             <input
                                 type="text"
-                                placeholder="Xarajat izohi (masalan, Logistika)"
+                                placeholder={t('cost-description-placeholder')}
                                 value={cost.description}
                                 onChange={(e) => handleCostChange(index, 'description', e.target.value)}
                                 className="w-2/3 p-2 border border-border rounded-md bg-background text-sm"
                             />
                             <input
                                 type="number"
-                                placeholder="Summa (UZS)"
+                                placeholder={t('cost-amount-placeholder')}
                                 value={cost.amount}
                                 onChange={(e) => handleCostChange(index, 'amount', e.target.value)}
                                 className="w-1/3 p-2 border border-border rounded-md bg-background text-sm"
@@ -220,8 +220,8 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
 
         <div className="mt-8 pt-6 border-t border-border">
             <div className="flex items-center justify-center mb-6">
-                <h2 className="text-xl font-bold text-center text-text-primary">Manba-platformani tanlang</h2>
-                <InfoTooltip text="AI tahlilni tanlangan platformaning o'ziga xos jihatlarini hisobga olgan holda amalga oshiradi. To'g'ri tanlov tahlil aniqligini oshiradi." />
+                <h2 className="text-xl font-bold text-center text-text-primary">{t('select-platform')}</h2>
+                <InfoTooltip text={t('select-platform-tooltip')} />
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-2xl mx-auto">
                 {(Object.values(PlatformEnum)).map((p) => (
@@ -261,8 +261,8 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
                                     platform === p ? 'text-brand-primary' : 'text-text-secondary'
                                 }`}>
                                     {p === PlatformEnum.XARID_UZEX 
-                                        ? 'UzEx - Asosiy platforma' 
-                                        : 'XTXarid - Muqobil platforma'
+                                        ? t('primary-platform') 
+                                        : t('alternative-platform')
                                     }
                                 </div>
                             </div>
@@ -278,14 +278,14 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
         {error && <p className="text-status-danger mt-6 text-sm text-center font-semibold" role="alert">{error}</p>}
         
         <div className="mt-8 p-4 bg-brand-primary/10 border border-brand-primary/20 rounded-lg text-center">
-            <p className="font-bold text-brand-primary">Keyingi Qadam:</p>
-            <p className="text-sm text-text-secondary mt-1">Tahlilni boshlaganingizdan so'ng, AI avval internetdan potentsial ta'minotchilarni qidiradi. Keyin siz ulardan eng ma'qullarini tanlab, yakuniy moliyaviy tahlilni yaratasiz.</p>
+            <p className="font-bold text-brand-primary">{t('next-step')}</p>
+            <p className="text-sm text-text-secondary mt-1">{t('next-step-description')}</p>
         </div>
 
         <div className="mt-10 text-center">
              <button type="submit" className="bg-gradient-to-r from-brand-gradient-from to-brand-gradient-to text-white font-bold py-3 px-12 text-lg rounded-lg hover:shadow-glow transition-all duration-300 transform hover:scale-105 shadow-lg focus:outline-none focus:ring-4 focus:ring-brand-primary/50 disabled:from-gray-600 disabled:to-gray-700 disabled:scale-100 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-3 mx-auto" disabled={isSubmitDisabled}>
                 <AnalyzeIcon />
-                Tahlilni Boshlash
+                {t('start-analysis')}
             </button>
         </div>
       </form>

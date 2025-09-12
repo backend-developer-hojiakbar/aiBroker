@@ -2,6 +2,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import type { AnalysisResult } from '../types';
 import { BackIcon, SearchIcon, FilterIcon, TrendIcon, BarChart3, EyeIcon, UsersIcon, TargetIcon, BuildingIcon, TrophyIcon, AlertIcon, CheckIcon, BookmarkIcon, SortIcon } from './Icons';
+import { smartStorage } from '../utils/smartStorage';
+import { t } from '../utils/translations';
 
 interface CompetitorsViewProps {
     tenders: AnalysisResult[];
@@ -292,15 +294,15 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
                     <div>
                         <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary mb-2">
-                            Elite Market Intelligence
+                            {t('competitors-elite-market-intelligence')}
                         </h1>
-                        <p className="text-text-secondary text-lg">Raqobatchilar tahlili va bozor razvedkasi</p>
+                        <p className="text-text-secondary text-lg">{t('competitors-analysis-and-market-intelligence')}</p>
                     </div>
                     <button 
                         onClick={onBack} 
                         className="flex items-center gap-3 bg-gradient-to-r from-black/30 to-black/20 text-text-primary font-semibold py-3 px-6 rounded-xl border border-border/50 hover:border-brand-primary/50 transition-all duration-300 transform hover:scale-105"
                     >
-                        <BackIcon className="w-5 h-5" /> Orqaga
+                        <BackIcon className="w-5 h-5" /> {t('competitors-back')}
                     </button>
                 </div>
 
@@ -308,19 +310,19 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div className="bg-gradient-to-r from-black/30 to-black/10 p-4 rounded-xl border border-border/50 text-center">
                         <div className="text-2xl font-bold text-text-primary">{insights.total}</div>
-                        <div className="text-sm text-text-secondary">Jami Raqobatchilar</div>
+                        <div className="text-sm text-text-secondary">{t('competitors-total')}</div>
                     </div>
                     <div className="bg-status-danger/10 p-4 rounded-xl border border-status-danger/30 text-center">
                         <div className="text-2xl font-bold text-status-danger">{insights.highThreat}</div>
-                        <div className="text-sm text-status-danger">Yuqori Xavfli</div>
+                        <div className="text-sm text-status-danger">{t('competitors-high-risk')}</div>
                     </div>
                     <div className="bg-accent/10 p-4 rounded-xl border border-accent/30 text-center">
                         <div className="text-2xl font-bold text-accent">{insights.recentlyActive}</div>
-                        <div className="text-sm text-accent">Faol Raqobatchilar</div>
+                        <div className="text-sm text-accent">{t('competitors-active')}</div>
                     </div>
                     <div className="bg-brand-primary/10 p-4 rounded-xl border border-brand-primary/30 text-center">
                         <div className="text-2xl font-bold text-brand-primary">{insights.avgCompetitiveIndex.toFixed(0)}</div>
-                        <div className="text-sm text-brand-primary">O'rtacha Indeks</div>
+                        <div className="text-sm text-brand-primary">{t('competitors-average-index')}</div>
                     </div>
                 </div>
 
@@ -331,7 +333,7 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                         <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-secondary" />
                         <input
                             type="text"
-                            placeholder="Raqobatchilarni qidirish..."
+                            placeholder={t('competitors-search-placeholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-10 pr-4 py-3 bg-black/20 border border-border/50 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-text-primary placeholder-text-secondary transition-all duration-300"
@@ -344,11 +346,11 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                         onChange={(e) => setFilter(e.target.value as FilterType)}
                         className="px-4 py-3 bg-black/20 border border-border/50 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-text-primary transition-all duration-300"
                     >
-                        <option value="all">Barcha raqobatchilar</option>
-                        <option value="high-threat">Yuqori xavfli</option>
-                        <option value="frequent">Tez-tez uchraydigan</option>
-                        <option value="recent">Yaqinda faol</option>
-                        <option value="winners">G'oliblar</option>
+                        <option value="all">{t('competitors-all')}</option>
+                        <option value="high-threat">{t('competitors-high-risk-filter')}</option>
+                        <option value="frequent">{t('competitors-frequent')}</option>
+                        <option value="recent">{t('competitors-recent')}</option>
+                        <option value="winners">{t('competitors-winners')}</option>
                     </select>
                     
                     {/* Sort */}
@@ -361,11 +363,11 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                         }}
                         className="px-4 py-3 bg-black/20 border border-border/50 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-text-primary transition-all duration-300"
                     >
-                        <option value="competitiveIndex-desc">Raqobat indeksi ↓</option>
-                        <option value="winRate-desc">G'alaba foizi ↓</option>
-                        <option value="appearances-desc">Ko'rinishlar ↓</option>
-                        <option value="recentActivity-desc">Faollik ↓</option>
-                        <option value="marketShare-desc">Bozor ulushi ↓</option>
+                        <option value="competitiveIndex-desc">{t('competitors-sort-by-index')}</option>
+                        <option value="winRate-desc">{t('competitors-sort-by-win-rate')}</option>
+                        <option value="appearances-desc">{t('competitors-sort-by-appearances')}</option>
+                        <option value="recentActivity-desc">{t('competitors-sort-by-activity')}</option>
+                        <option value="marketShare-desc">{t('competitors-sort-by-market-share')}</option>
                     </select>
                     
                     {/* View Mode */}
@@ -380,7 +382,7 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                                         : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
                                 }`}
                             >
-                                {mode === 'table' ? 'Jadval' : mode === 'cards' ? 'Kartalar' : 'Tahlil'}
+                                {mode === 'table' ? t('competitors-table-view') : mode === 'cards' ? t('competitors-cards-view') : t('competitors-analytics-view')}
                             </button>
                         ))}
                     </div>
@@ -392,18 +394,16 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                         {competitorStats.length === 0 ? (
                             <div>
                                 <div className="text-6xl mb-4">🏆</div>
-                                <h3 className="text-xl font-bold text-text-primary mb-2">Raqobatchilar Ma'lumoti Yo'q</h3>
+                                <h3 className="text-xl font-bold text-text-primary mb-2">{t('competitors-no-data-title')}</h3>
                                 <p className="text-text-secondary max-w-md mx-auto">
-                                    Raqobatchilar ro'yxatini shakllantirish uchun, yakunlangan tenderlarga 'Yutqazdim' 
-                                    statusini belgilab, g'olib kompaniya nomini kiriting. Tizim avtomatik ravishda 
-                                    raqobatchilaringiz portretini yaratadi.
+                                    {t('competitors-no-data-description')}
                                 </p>
                             </div>
                         ) : (
                             <div>
                                 <div className="text-6xl mb-4">🔍</div>
-                                <h3 className="text-xl font-bold text-text-primary mb-2">Filter bo'yicha natija yo'q</h3>
-                                <p className="text-text-secondary">Qidiruv mezonlaringizni o'zgartiring yoki filtrlarni tozalang.</p>
+                                <h3 className="text-xl font-bold text-text-primary mb-2">{t('competitors-no-results-title')}</h3>
+                                <p className="text-text-secondary">{t('competitors-no-results-description')}</p>
                             </div>
                         )}
                     </div>
@@ -434,8 +434,8 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                                                             competitor.riskLevel === 'medium' ? 'bg-status-warning/20 text-status-warning' :
                                                             'bg-status-success/20 text-status-success'
                                                         }`}>
-                                                            {competitor.riskLevel === 'high' ? 'Yuqori xavf' : 
-                                                             competitor.riskLevel === 'medium' ? 'O\'rta xavf' : 'Past xavf'}
+                                                            {competitor.riskLevel === 'high' ? t('competitors-high-risk-label') : 
+                                                             competitor.riskLevel === 'medium' ? t('competitors-medium-risk-label') : t('competitors-low-risk-label')}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -449,6 +449,7 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                                                             ? 'text-yellow-400 bg-yellow-400/10' 
                                                             : 'text-text-secondary hover:text-yellow-400 hover:bg-yellow-400/10'
                                                     }`}
+                                                    title={isBookmarked ? t('competitors-remove-bookmark') : t('competitors-bookmark')}
                                                 >
                                                     <BookmarkIcon className="w-5 h-5" />
                                                 </button>
@@ -458,18 +459,18 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                                             <div className="grid grid-cols-2 gap-4 mb-4">
                                                 <div className="text-center">
                                                     <div className="text-2xl font-bold text-text-primary">{competitor.appearances}</div>
-                                                    <div className="text-xs text-text-secondary">Ko'rinishlar</div>
+                                                    <div className="text-xs text-text-secondary">{t('competitors-appearances')}</div>
                                                 </div>
                                                 <div className="text-center">
                                                     <div className="text-2xl font-bold text-status-success">{competitor.winRate.toFixed(0)}%</div>
-                                                    <div className="text-xs text-text-secondary">G'alaba</div>
+                                                    <div className="text-xs text-text-secondary">{t('competitors-wins')}</div>
                                                 </div>
                                             </div>
                                             
                                             {/* Competitive Index */}
                                             <div className="mb-4">
                                                 <div className="flex justify-between text-sm mb-1">
-                                                    <span className="text-text-secondary">Raqobat Indeksi</span>
+                                                    <span className="text-text-secondary">{t('competitors-competitive-index')}</span>
                                                     <span className={`font-bold ${getCompetitiveIndexColor(competitor.competitiveIndex)}`}>
                                                         {competitor.competitiveIndex.toFixed(0)}
                                                     </span>
@@ -489,16 +490,16 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                                             {/* Key Info */}
                                             <div className="space-y-2 text-sm">
                                                 <div className="flex justify-between">
-                                                    <span className="text-text-secondary">Asosiy strategiya:</span>
+                                                    <span className="text-text-secondary">{t('competitors-key-strategy')}:</span>
                                                     <span className="text-text-primary font-medium truncate ml-2">{competitor.topStrategy}</span>
                                                 </div>
                                                 <div className="flex justify-between">
-                                                    <span className="text-text-secondary">Bozor ulushi:</span>
+                                                    <span className="text-text-secondary">{t('competitors-market-share')}:</span>
                                                     <span className="text-brand-primary font-bold">{competitor.marketShare.toFixed(1)}%</span>
                                                 </div>
                                                 {competitor.lastEncounter && (
                                                     <div className="flex justify-between">
-                                                        <span className="text-text-secondary">Oxirgi uchrashuv:</span>
+                                                        <span className="text-text-secondary">{t('competitors-last-encounter')}:</span>
                                                         <span className="text-accent">{competitor.lastEncounter.toLocaleDateString('uz-UZ')}</span>
                                                     </div>
                                                 )}
@@ -514,15 +515,15 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                                 <table className="w-full text-sm">
                                     <thead className="text-xs text-text-primary uppercase bg-gradient-to-r from-black/30 to-black/20 border border-border/50">
                                         <tr>
-                                            <th className="px-6 py-4 text-left rounded-l-lg">Raqobatchi</th>
-                                            <th className="px-6 py-4 text-center">Risk</th>
-                                            <th className="px-6 py-4 text-center">Ko'rinishlar</th>
-                                            <th className="px-6 py-4 text-center">G'alabalar</th>
-                                            <th className="px-6 py-4 text-center">G'alaba %</th>
-                                            <th className="px-6 py-4 text-center">Bozor ulushi</th>
-                                            <th className="px-6 py-4 text-center">Raqobat indeksi</th>
-                                            <th className="px-6 py-4 text-center">Faollik</th>
-                                            <th className="px-6 py-4 text-center rounded-r-lg">Amallar</th>
+                                            <th className="px-6 py-4 text-left rounded-l-lg">{t('competitors-name')}</th>
+                                            <th className="px-6 py-4 text-center">{t('competitors-risk')}</th>
+                                            <th className="px-6 py-4 text-center">{t('competitors-appearances')}</th>
+                                            <th className="px-6 py-4 text-center">{t('competitors-wins')}</th>
+                                            <th className="px-6 py-4 text-center">{t('competitors-win-percentage')}</th>
+                                            <th className="px-6 py-4 text-center">{t('competitors-market-share')}</th>
+                                            <th className="px-6 py-4 text-center">{t('competitors-competitive-index')}</th>
+                                            <th className="px-6 py-4 text-center">{t('competitors-activity')}</th>
+                                            <th className="px-6 py-4 text-center rounded-r-lg">{t('competitors-actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -555,8 +556,8 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                                                             competitor.riskLevel === 'medium' ? 'bg-status-warning/20 text-status-warning' :
                                                             'bg-status-success/20 text-status-success'
                                                         }`}>
-                                                            {competitor.riskLevel === 'high' ? 'Yuqori' : 
-                                                             competitor.riskLevel === 'medium' ? 'O\'rta' : 'Past'}
+                                                            {competitor.riskLevel === 'high' ? t('competitors-high-risk-label') : 
+                                                             competitor.riskLevel === 'medium' ? t('competitors-medium-risk-label') : t('competitors-low-risk-label')}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 text-center font-semibold">{competitor.appearances}</td>
@@ -591,7 +592,7 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                                                             <button
                                                                 onClick={() => setSelectedCompetitor(competitor)}
                                                                 className="p-2 rounded-lg text-text-secondary hover:text-brand-primary hover:bg-brand-primary/10 transition-all duration-300"
-                                                                title="Batafsil ko'rish"
+                                                                title={t('competitors-view-details')}
                                                             >
                                                                 <EyeIcon className="w-4 h-4" />
                                                             </button>
@@ -602,7 +603,7 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                                                                         ? 'text-yellow-400 bg-yellow-400/10' 
                                                                         : 'text-text-secondary hover:text-yellow-400 hover:bg-yellow-400/10'
                                                                 }`}
-                                                                title={isBookmarked ? "Saqlangandan olib tashlash" : "Saqlash"}
+                                                                title={isBookmarked ? t('competitors-remove-bookmark') : t('competitors-bookmark')}
                                                             >
                                                                 <BookmarkIcon className="w-4 h-4" />
                                                             </button>
@@ -622,7 +623,7 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                                 <div className="bg-gradient-to-r from-black/30 to-black/10 p-6 rounded-xl border border-border/50">
                                     <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-3">
                                         <BarChart3 strokeWidth={2} />
-                                        Bozor Hukmronligi Tahlili
+                                        {t('competitors-market-dominance')}
                                     </h3>
                                     <div className="space-y-4">
                                         {filteredCompetitors.slice(0, 10).map((competitor, index) => (
@@ -654,7 +655,7 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="bg-gradient-to-r from-status-danger/10 to-status-danger/5 p-6 rounded-xl border border-status-danger/30">
                                         <h4 className="text-lg font-bold text-status-danger mb-4 flex items-center gap-2">
-                                            <AlertIcon className="w-5 h-5" /> Yuqori Xavfli Raqobatchilar
+                                            <AlertIcon className="w-5 h-5" /> {t('competitors-high-threat-competitors')}
                                         </h4>
                                         <div className="space-y-3">
                                             {filteredCompetitors.filter(c => c.riskLevel === 'high').slice(0, 5).map((competitor) => (
@@ -668,7 +669,7 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
 
                                     <div className="bg-gradient-to-r from-status-success/10 to-status-success/5 p-6 rounded-xl border border-status-success/30">
                                         <h4 className="text-lg font-bold text-status-success mb-4 flex items-center gap-2">
-                                            <TrophyIcon className="w-5 h-5" /> Eng Muvaffaqiyatli Raqobatchilar
+                                            <TrophyIcon className="w-5 h-5" /> {t('competitors-successful-competitors')}
                                         </h4>
                                         <div className="space-y-3">
                                             {filteredCompetitors
@@ -678,7 +679,7 @@ const CompetitorsView: React.FC<CompetitorsViewProps> = ({ tenders, onBack }) =>
                                                 .map((competitor) => (
                                                 <div key={competitor.name} className="flex justify-between items-center p-3 bg-black/20 rounded-lg">
                                                     <span className="font-semibold text-text-primary">{competitor.name}</span>
-                                                    <span className="text-status-success font-bold">{competitor.wins} g'alaba</span>
+                                                    <span className="text-status-success font-bold">{competitor.wins} {t('competitors-wins-label')}</span>
                                                 </div>
                                             ))}
                                         </div>

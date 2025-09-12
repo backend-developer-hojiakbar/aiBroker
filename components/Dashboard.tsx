@@ -4,6 +4,7 @@ import type { AnalysisResult, TenderStatus, AIInsight, InsightActionView, Insigh
 import { PlusIcon, TrashIcon, ArchiveIcon, StarIcon, CheckIcon, BrainCircuitIcon, TelescopeIcon, Lightbulb, BarChart3, TrendingUpIcon, Settings, AnalyzeIcon, VisionaryCouncilIcon, TrendIcon, FutureTechIcon, BotIcon, UserIcon, TrophyIcon } from './Icons';
 import { tenderSearchEngine, SearchResult } from '../utils/searchEngine';
 import UniversalSearch from './UniversalSearch';
+import { t } from '../utils/translations';
 
 interface DashboardProps {
     tenders: AnalysisResult[];
@@ -50,23 +51,23 @@ const WelcomeGuide: React.FC<{ onNew: () => void }> = ({ onNew }) => (
                 <div className="w-20 h-20 bg-gradient-to-r from-brand-gradient-from to-brand-gradient-to rounded-full animate-spin-slow opacity-20"></div>
             </div>
         </div>
-        <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-gradient-from to-brand-gradient-to mb-4">AI-Broker Elite'ga Xush Kelibsiz!</h2>
+        <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-gradient-from to-brand-gradient-to mb-4">{t('welcome-title')}</h2>
         <p className="mt-2 text-text-secondary max-w-2xl mx-auto text-lg leading-relaxed">
-            Dunyodagi eng kuchli tender tahlil tizimiga xush kelibsiz. AI-Broker Elite sizga raqobatchilardan ustun kelish, eng yuqori daromad olish va bozorni boshqarishda yordam beradi.
+            {t('welcome-description')}
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8 w-full max-w-4xl">
             {/* Step 1: Advanced Profile Setup */}
             <div className="bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 p-6 rounded-xl border border-brand-primary/30 hover:border-brand-primary/50 transition-all duration-300 transform hover:scale-105">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-r from-brand-gradient-from to-brand-gradient-to text-white flex items-center justify-center font-bold text-2xl mb-4 mx-auto animate-pulse">1</div>
-                <h3 className="font-bold text-xl text-text-primary mb-3 text-center">Elite Profil Sozlash</h3>
+                <h3 className="font-bold text-xl text-text-primary mb-3 text-center">{t('step-1-title')}</h3>
                 <p className="text-sm text-text-secondary text-center leading-relaxed">
-                    Kompaniya profilini mukammal sozlang: QQS stavkalari, ustama xarajatlar, sotuvchi agentlar va avtomatik tender qidiruv tizimini faollashtiring.
+                    {t('step-1-description')}
                 </p>
                 <div className="flex justify-center mt-4">
                     <a href="#profile" onClick={(e) => { e.preventDefault(); (document.querySelector('[title="Profil"]') as HTMLElement)?.click(); }} 
                        className="bg-brand-primary/20 hover:bg-brand-primary/30 text-brand-primary font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
-                        <Settings className="w-4 h-4" /> Sozlash
+                        <Settings className="w-4 h-4" /> {t('step-1-button')}
                     </a>
                 </div>
             </div>
@@ -74,13 +75,13 @@ const WelcomeGuide: React.FC<{ onNew: () => void }> = ({ onNew }) => (
             {/* Step 2: AI-Powered Analysis */}
             <div className="bg-gradient-to-br from-brand-secondary/10 to-accent/10 p-6 rounded-xl border border-brand-secondary/30 hover:border-brand-secondary/50 transition-all duration-300 transform hover:scale-105">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-r from-brand-secondary to-accent text-white flex items-center justify-center font-bold text-2xl mb-4 mx-auto animate-pulse">2</div>
-                <h3 className="font-bold text-xl text-text-primary mb-3 text-center">AI Elite Tahlil</h3>
+                <h3 className="font-bold text-xl text-text-primary mb-3 text-center">{t('step-2-title')}</h3>
                 <p className="text-sm text-text-secondary text-center leading-relaxed">
-                    Tender faylini yuklang va AI-ning eng ilg'or tahlil algoritmlari orqali raqobatchilarni mag'lub etish strategiyasini oling.
+                    {t('step-2-description')}
                 </p>
                 <div className="flex justify-center mt-4">
                     <button onClick={onNew} className="bg-brand-secondary/20 hover:bg-brand-secondary/30 text-brand-secondary font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
-                        <AnalyzeIcon className="w-4 h-4" /> Boshlash
+                        <AnalyzeIcon className="w-4 h-4" /> {t('step-2-button')}
                     </button>
                 </div>
             </div>
@@ -88,13 +89,13 @@ const WelcomeGuide: React.FC<{ onNew: () => void }> = ({ onNew }) => (
             {/* Step 3: Market Domination */}
             <div className="bg-gradient-to-br from-accent/10 to-status-success/10 p-6 rounded-xl border border-accent/30 hover:border-accent/50 transition-all duration-300 transform hover:scale-105">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-r from-accent to-status-success text-white flex items-center justify-center font-bold text-2xl mb-4 mx-auto animate-pulse">3</div>
-                <h3 className="font-bold text-xl text-text-primary mb-3 text-center">Bozorni Boshqarish</h3>
+                <h3 className="font-bold text-xl text-text-primary mb-3 text-center">{t('step-3-title')}</h3>
                 <p className="text-sm text-text-secondary text-center leading-relaxed">
-                    AI tavsiyalari asosida tenderlarni yuting, raqobatchilarni mag'lub eting va bozoringizni kengaytiring.
+                    {t('step-3-description')}
                 </p>
                 <div className="flex justify-center mt-4">
                     <div className="bg-accent/20 text-accent font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
-                        <TrophyIcon className="w-4 h-4" /> G'alaba
+                        <TrophyIcon className="w-4 h-4" /> {t('step-3-button')}
                     </div>
                 </div>
             </div>
@@ -102,21 +103,21 @@ const WelcomeGuide: React.FC<{ onNew: () => void }> = ({ onNew }) => (
         
         <button onClick={onNew} className="mt-6 bg-gradient-to-r from-brand-gradient-from via-brand-secondary to-brand-gradient-to text-white font-bold py-4 px-12 rounded-2xl hover:shadow-2xl transition-all duration-500 transform hover:scale-110 shadow-lg flex items-center gap-3 mx-auto text-lg relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-            <AnalyzeIcon className="w-6 h-6" /> AI Elite Tahlilni Boshlash
+            <AnalyzeIcon className="w-6 h-6" /> {t('start-ai-analysis')}
         </button>
         
         <div className="mt-8 grid grid-cols-3 gap-8 text-center max-w-md mx-auto">
             <div>
                 <div className="text-2xl font-bold text-brand-primary">95%</div>
-                <div className="text-xs text-text-secondary">Aniqlik</div>
+                <div className="text-xs text-text-secondary">{t('accuracy')}</div>
             </div>
             <div>
                 <div className="text-2xl font-bold text-brand-secondary">3x</div>
-                <div className="text-xs text-text-secondary">Tezroq</div>
+                <div className="text-xs text-text-secondary">{t('faster')}</div>
             </div>
             <div>
                 <div className="text-2xl font-bold text-accent">∞</div>
-                <div className="text-xs text-text-secondary">Imkoniyat</div>
+                <div className="text-xs text-text-secondary">{t('opportunity')}</div>
             </div>
         </div>
     </div>
@@ -189,7 +190,7 @@ const AIVisionariesSection: React.FC<{ insight: VisionaryInsight | null; isLoadi
         return (
             <div className="mb-6">
                  <h2 className="flex items-center gap-2 text-xl font-bold text-text-primary mb-4">
-                    <VisionaryCouncilIcon /> AI Vizionerlar Kengashi
+                    <VisionaryCouncilIcon /> {t('dashboard-visionary-council')}
                 </h2>
                 <div className="h-48 bg-surface rounded-lg border border-border animate-shimmer"></div>
             </div>
@@ -203,7 +204,7 @@ const AIVisionariesSection: React.FC<{ insight: VisionaryInsight | null; isLoadi
     return (
         <div className="mb-8 p-6 bg-gradient-to-br from-surface to-black/30 rounded-2xl border border-border shadow-soft">
             <h2 className="flex items-center gap-3 text-2xl font-bold text-text-primary mb-4">
-                <VisionaryCouncilIcon /> AI Vizionerlar Kengashi
+                <VisionaryCouncilIcon /> {t('dashboard-visionary-council')}
             </h2>
             <p className="text-md text-text-secondary mb-6 border-l-4 border-brand-secondary pl-4">{insight.summary}</p>
             
@@ -212,7 +213,7 @@ const AIVisionariesSection: React.FC<{ insight: VisionaryInsight | null; isLoadi
                 <div className="bg-surface-light p-4 rounded-lg border border-border/50">
                     <div className="flex items-center gap-3 text-brand-primary">
                         <TrendIcon />
-                        <h4 className="font-bold text-lg">Trend Analizatori A.I.</h4>
+                        <h4 className="font-bold text-lg">{t('dashboard-trend-analyzer')}</h4>
                     </div>
                     <p className="text-sm text-text-secondary mt-3">{insight.trendAnalyzer}</p>
                 </div>
@@ -221,7 +222,7 @@ const AIVisionariesSection: React.FC<{ insight: VisionaryInsight | null; isLoadi
                 <div className="bg-surface-light p-4 rounded-lg border border-border/50">
                     <div className="flex items-center gap-3 text-brand-secondary">
                         <Lightbulb />
-                        <h4 className="font-bold text-lg">Innovatsiya A.I.</h4>
+                        <h4 className="font-bold text-lg">{t('dashboard-innovation-ai')}</h4>
                     </div>
                     <p className="text-sm text-text-secondary mt-3">{insight.innovationAI}</p>
                 </div>
@@ -230,7 +231,7 @@ const AIVisionariesSection: React.FC<{ insight: VisionaryInsight | null; isLoadi
                 <div className="bg-surface-light p-4 rounded-lg border border-border/50">
                     <div className="flex items-center gap-3 text-accent">
                         <FutureTechIcon />
-                        <h4 className="font-bold text-lg">Bo'lajak Texnologiyalar A.I.</h4>
+                        <h4 className="font-bold text-lg">{t('dashboard-future-tech-ai')}</h4>
                     </div>
                     <p className="text-sm text-text-secondary mt-3">{insight.futureTechAI}</p>
                 </div>
@@ -305,7 +306,7 @@ const TenderCard: React.FC<TenderCardProps> = React.memo(({ tender, onSelect, on
                             </div>
                         )}
                          {tender.analysisType === 'auto' && !agentName && (
-                            <div className="flex-shrink-0" title="Avtomatik tahlil qilingan">
+                            <div className="flex-shrink-0" title={t('dashboard-automatically-analyzed')}>
                                 <BotIcon className="w-5 h-5 text-brand-secondary" />
                             </div>
                         )}
@@ -316,9 +317,9 @@ const TenderCard: React.FC<TenderCardProps> = React.memo(({ tender, onSelect, on
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full transition-opacity duration-200 group-hover:opacity-0 ${statusStyles[tender.status]}`}>{tender.status}</span>
                          {/* Action Icons - appear on hover */}
                         <div className="absolute top-0 right-0 flex items-center bg-surface-light rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                           <button onClick={onToggleWatchlist} className="p-1.5 rounded-full text-accent" title="Kuzatuvga olish"><StarIcon filled={tender.isWatched} /></button>
-                           <button onClick={onArchive} className="p-1.5 rounded-full text-text-secondary hover:text-text-primary" title="Arxivlash"><ArchiveIcon /></button>
-                           <button onClick={onDelete} className="p-1.5 rounded-full text-text-secondary hover:text-status-danger" title="O'chirish"><TrashIcon /></button>
+                           <button onClick={onToggleWatchlist} className="p-1.5 rounded-full text-accent" title={t('dashboard-watchlist')}><StarIcon filled={tender.isWatched} /></button>
+                           <button onClick={onArchive} className="p-1.5 rounded-full text-text-secondary hover:text-text-primary" title={t('dashboard-archive')}><ArchiveIcon /></button>
+                           <button onClick={onDelete} className="p-1.5 rounded-full text-text-secondary hover:text-status-danger" title={t('dashboard-delete')}><TrashIcon /></button>
                         </div>
                     </div>
                 </div>
@@ -333,8 +334,8 @@ const TenderCard: React.FC<TenderCardProps> = React.memo(({ tender, onSelect, on
 
                     {/* Back of the card (visible on hover) */}
                     <div className="absolute inset-0 transition-opacity duration-300 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto flex flex-col justify-center text-sm">
-                        <p className="font-bold text-text-primary">Potentsial Ball:</p>
-                        <p className="text-xs text-text-secondary mb-2">Imkoniyat va Risk ballari asosida hisoblangan umumiy ko'rsatkich.</p>
+                        <p className="font-bold text-text-primary">{t('dashboard-potential-score')}</p>
+                        <p className="text-xs text-text-secondary mb-2">{t('dashboard-potential-score-description')}</p>
                         <div className="space-y-1 text-xs">
                            <p><strong>Imkoniyat:</strong> <span className="font-bold text-status-success">{tender.opportunityScore} / 100</span></p>
                            <p><strong>Risk:</strong> <span className="font-bold text-status-danger">{tender.riskScore} / 100</span></p>
@@ -369,11 +370,11 @@ const TenderCard: React.FC<TenderCardProps> = React.memo(({ tender, onSelect, on
 
 const BulkActionsToolbar: React.FC<{ count: number; onAction: (action: 'archive' | 'unarchive' | 'delete') => void; onClear: () => void; }> = ({ count, onAction, onClear }) => (
     <div className="fixed bottom-6 right-1/2 translate-x-1/2 bg-surface backdrop-blur-xl border border-border text-text-primary rounded-lg shadow-2xl p-3 flex items-center gap-4 z-50 animate-slide-up">
-        <span className="font-bold text-md">{count} ta tanlandi</span>
+        <span className="font-bold text-md">{count} {t('dashboard-selected-items')}</span>
         <div className="h-6 w-px bg-white/10"></div>
-        <button onClick={() => onAction('archive')} className="bg-surface-light hover:bg-white/20 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">Arxivlash</button>
-        <button onClick={() => onAction('unarchive')} className="bg-surface-light hover:bg-white/20 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">Arxivdan chiqarish</button>
-        <button onClick={() => onAction('delete')} className="bg-status-danger/80 hover:bg-status-danger text-white px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">O'chirish</button>
+        <button onClick={() => onAction('archive')} className="bg-surface-light hover:bg-white/20 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">{t('dashboard-archive-action')}</button>
+        <button onClick={() => onAction('unarchive')} className="bg-surface-light hover:bg-white/20 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">{t('dashboard-unarchive-action')}</button>
+        <button onClick={() => onAction('delete')} className="bg-status-danger/80 hover:bg-status-danger text-white px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">{t('dashboard-delete-action')}</button>
         <button onClick={onClear} className="text-xl font-light hover:bg-white/10 rounded-full w-8 h-8 flex items-center justify-center transition-colors">&times;</button>
     </div>
 );
@@ -470,12 +471,12 @@ const Dashboard: React.FC<DashboardProps> = ({ tenders, insights, loadingInsight
     const EmptyState = useMemo(() => React.memo(() => (
          <div className="text-center py-20 px-6 bg-surface rounded-lg border border-border flex flex-col items-center">
             <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-brand-primary/50 mb-4"><path d="m12 3-1.45 4.1-4.05 1.9 4.05 1.9L12 17l1.45-4.1 4.05-1.9-4.05-1.9L12 3z"/><path d="M3 12h18"/><path d="M12 3v18"/></svg>
-            <h2 className="text-2xl font-bold text-text-primary">Tahlillar Topilmadi</h2>
+            <h2 className="text-2xl font-bold text-text-primary">{t('no-tenders-title')}</h2>
             <p className="mt-2 text-text-secondary">
-                Filtrlarni o'zgartirib ko'ring yoki yangi tahlil yarating.
+                {t('no-tenders-description')}
             </p>
             <button onClick={onNew} className="mt-6 bg-gradient-to-r from-brand-gradient-from to-brand-gradient-to text-white font-bold py-3 px-8 rounded-lg hover:shadow-glow transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2 mx-auto">
-                <PlusIcon /> Yangi Tahlil
+                <PlusIcon /> {t('new-analysis')}
             </button>
         </div>
     )), [onNew]);
@@ -493,7 +494,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tenders, insights, loadingInsight
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                         <input 
                             type="text"
-                            placeholder="Qidirish (lot, buyurtmachi, agent...)"
+                            placeholder="{t('search-placeholder')}"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full p-2 border border-border rounded-md bg-background focus:ring-brand-primary focus:border-brand-primary md:col-span-2"
@@ -503,8 +504,8 @@ const Dashboard: React.FC<DashboardProps> = ({ tenders, insights, loadingInsight
                             onChange={(e) => setStatusFilter(e.target.value as any)}
                             className="w-full p-2 border border-border rounded-md bg-background focus:ring-brand-primary focus:border-brand-primary"
                         >
-                            <option value="All">Barcha Statuslar</option>
-                            <option value="Watched">⭐ Kuzatuvdagilar</option>
+                            <option value="All">{t('all-statuses')}</option>
+                            <option value="Watched">{t('watched-items')}</option>
                             {Object.keys(statusStyles).map(status => <option key={status} value={status}>{status}</option>)}
                         </select>
                          <select
@@ -512,9 +513,9 @@ const Dashboard: React.FC<DashboardProps> = ({ tenders, insights, loadingInsight
                             onChange={(e) => setSortBy(e.target.value as any)}
                             className="w-full p-2 border border-border rounded-md bg-background focus:ring-brand-primary focus:border-brand-primary"
                         >
-                            <option value="analysisDate">Saralash: Eng yangi</option>
-                            <option value="riskScore">Saralash: Yuqori risk</option>
-                            <option value="opportunityScore">Saralash: Yuqori imkoniyat</option>
+                            <option value="analysisDate">{t('sort-by-newest')}</option>
+                            <option value="riskScore">{t('sort-by-high-risk')}</option>
+                            <option value="opportunityScore">{t('sort-by-high-opportunity')}</option>
                         </select>
                     </div>
                      <div className="mt-3 flex justify-end items-center">
@@ -525,7 +526,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tenders, insights, loadingInsight
                                 onChange={(e) => setShowArchived(e.target.checked)}
                                 className="h-4 w-4 rounded border-gray-500 bg-background text-brand-primary focus:ring-brand-primary"
                             />
-                            Arxivni Ko'rsatish
+                            {t('show-archived')}
                         </label>
                     </div>
                 </div>

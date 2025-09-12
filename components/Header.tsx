@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppView } from '../App';
 import { LogoIcon, PlusIcon, LayoutDashboard, TelescopeIcon, BarChart3, FileText, Lightbulb, Settings, ChevronsLeftRight, BotIcon, CalendarIcon } from './Icons';
 import { UIPreferences } from '../types';
+import { t, getCurrentLanguage, setLanguage } from '../utils/translations';
 
 interface SidebarProps {
     onNavigate: (view: AppView) => void;
@@ -9,6 +10,7 @@ interface SidebarProps {
     isCollapsed: boolean;
     setCollapsed: (isCollapsed: boolean) => void;
     prefs: UIPreferences;
+    onPrefsChange: (prefs: UIPreferences) => void;
 }
 
 const themeClasses = {
@@ -34,15 +36,33 @@ const themeClasses = {
     },
 };
 
-export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, currentView, isCollapsed, setCollapsed, prefs }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, currentView, isCollapsed, setCollapsed, prefs, onPrefsChange }) => {
     const currentTheme = themeClasses[prefs.theme] || themeClasses.default;
     const iconStrokeWidth = prefs.iconStyle === 'bold' ? 2.5 : 2;
+    
+    const [currentLanguage, setCurrentLanguage] = useState<'uz-latn' | 'uz-cyrl' | 'ru'>(getCurrentLanguage());
+
+    useEffect(() => {
+        const handleLanguageChange = () => {
+            setCurrentLanguage(getCurrentLanguage());
+        };
+        
+        window.addEventListener('languageChanged', handleLanguageChange);
+        return () => window.removeEventListener('languageChanged', handleLanguageChange);
+    }, []);
 
     const navItems = [
-        { view: 'dashboard', label: 'Boshqaruv', icon: <LayoutDashboard strokeWidth={iconStrokeWidth} /> },
-        { view: 'analytics', label: 'Statistika', icon: <BarChart3 strokeWidth={iconStrokeWidth} /> },
-        { view: 'contracts', label: 'Shartnomalar', icon: <FileText strokeWidth={iconStrokeWidth} /> },
+        { view: 'dashboard', label: t('nav-dashboard'), icon: <LayoutDashboard strokeWidth={iconStrokeWidth} /> },
+        { view: 'analytics', label: t('nav-analytics'), icon: <BarChart3 strokeWidth={iconStrokeWidth} /> },
+        // Hidden competitor analysis section
+        // { view: 'competitors', label: t('competitor-analysis'), icon: <TelescopeIcon strokeWidth={iconStrokeWidth} /> },
+        { view: 'contracts', label: t('nav-contracts'), icon: <FileText strokeWidth={iconStrokeWidth} /> },
     ];
+
+    const handleLanguageChange = (lang: 'uz-latn' | 'uz-cyrl' | 'ru') => {
+        setLanguage(lang);
+        onPrefsChange({ ...prefs, language: lang });
+    };
 
     return (
         <aside 
@@ -70,16 +90,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, currentView, isCol
                     ))}
                 </ul>
             </nav>
-            <div className="flex-shrink-0 border-t border-border">
+            <div className="flex-shrink-0 border-t border-border p-3">
+                <div className="mb-3">
+                    <label className="block text-xs font-semibold text-text-secondary mb-1">{t('language-selector')}</label>
+                    <select
+                        value={currentLanguage}
+                        onChange={(e) => handleLanguageChange(e.target.value as 'uz-latn' | 'uz-cyrl' | 'ru')}
+                        className="w-full p-1 text-xs border border-border rounded bg-background text-text-primary"
+                    >
+                        <option value="uz-latn">{t('uzbek-latin')}</option>
+                        <option value="uz-cyrl">{t('uzbek-cyrillic')}</option>
+                        <option value="ru">{t('russian')}</option>
+                    </select>
+                </div>
                 <ul>
                     <li className="px-3">
                         <button 
                             onClick={() => onNavigate('profile')}
                             className={`flex items-center w-full h-12 px-3 my-1 rounded-md transition-colors duration-200 ${currentView === 'profile' ? currentTheme.active : `${currentTheme.hover} text-text-secondary hover:text-text-primary`}`}
-                            title="Profil"
+                            title={t('nav-profile')}
                         >
                            <div className="flex-shrink-0"><Settings strokeWidth={iconStrokeWidth} /></div>
-                           <span className={`ml-4 font-semibold overflow-hidden transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>Profil</span>
+                           <span className={`ml-4 font-semibold overflow-hidden transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>{t('nav-profile')}</span>
                         </button>
                     </li>
                 </ul>
@@ -95,32 +127,43 @@ interface HeaderProps {
 }
 
 const viewTitles: Record<AppView, string> = {
-    dashboard: 'Boshqaruv Paneli',
-    analytics: 'Statistika va Tahlil',
-    competitors: 'Raqobatchilar Tahlili',
-    contracts: 'Shartnomalar Tahlili',
-    profile: 'Kompaniya Profili',
-    input: 'Yangi Tahlil Yaratish',
-    loadingSourcing: 'Ta\'minot Manbalari Qidirilmoqda',
-    sourcingSelection: 'Ta\'minotchilarni Tanlash',
-    loadingAnalysis: 'Tahlil Qilinmoqda',
-    results: 'Tahlil Natijasi',
-    sharedReport: 'Ulashilgan Hisobot',
-    loadingContract: 'Shartnoma Tahlil Qilinmoqda',
+    dashboard: 'dashboard-title',
+    analytics: 'analytics-title',
+    competitors: 'competitors-title',
+    contracts: 'contracts-title',
+    profile: 'profile-title',
+    input: 'input-title',
+    loadingSourcing: 'loading-sourcing-title',
+    sourcingSelection: 'sourcing-selection-title',
+    loadingAnalysis: 'loading-analysis-title',
+    results: 'results-title',
+    sharedReport: 'shared-report-title',
+    loadingContract: 'loading-contract-title',
 };
 
 export const Header: React.FC<HeaderProps> = ({ currentView, onNewAnalysis }) => {
+    const [currentLanguage, setCurrentLanguage] = useState<'uz-latn' | 'uz-cyrl' | 'ru'>(getCurrentLanguage());
+
+    useEffect(() => {
+        const handleLanguageChange = () => {
+            setCurrentLanguage(getCurrentLanguage());
+        };
+        
+        window.addEventListener('languageChanged', handleLanguageChange);
+        return () => window.removeEventListener('languageChanged', handleLanguageChange);
+    }, []);
+
     return (
         <header className="flex-shrink-0 h-20 flex items-center justify-between px-8 border-b border-border bg-surface/80 backdrop-blur-sm sticky top-0 z-30">
-            <h1 className="text-xl font-bold text-text-primary">{viewTitles[currentView] || 'AI-Broker'}</h1>
+            <h1 className="text-xl font-bold text-text-primary">{t(viewTitles[currentView] || 'dashboard-title')}</h1>
             <div className="flex items-center gap-4">
                 <button
                     onClick={onNewAnalysis}
                     className="bg-gradient-to-r from-brand-gradient-from to-brand-gradient-to text-white font-bold py-2.5 px-5 rounded-lg hover:shadow-glow transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2 text-sm"
-                    aria-label="Yangi Tahlil"
+                    aria-label={t('new-analysis')}
                 >
                     <PlusIcon />
-                    <span>Yangi Tahlil</span>
+                    <span>{t('new-analysis')}</span>
                 </button>
             </div>
         </header>

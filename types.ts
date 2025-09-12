@@ -195,6 +195,7 @@ export interface AnalysisContext {
 export interface UIPreferences {
   theme: 'default' | 'corporate' | 'cosmos' | 'energy';
   iconStyle: 'line' | 'bold';
+  language: 'uz-latn' | 'uz-cyrl' | 'ru'; // Added language preference
 }
 
 /**

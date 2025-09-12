@@ -3,6 +3,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { AnalysisResult, TenderData, Platform, LotPassport, AnalysisContext, TenderStatus, WinnerInfo, CompanyProfile, ContractAnalysisResult, AIInsight, InsightActionView, VisionaryInsight, UIPreferences, DiscoveredTender, SourcingRecommendation, SourcingResult } from './types';
 import { generateFinalAnalysis, findSourcingOptions, analyzeContract, generateDashboardInsights, generateVisionaryInsights } from './services/geminiService';
 import { smartStorage } from './utils/smartStorage';
+import { t, setLanguage, getCurrentLanguage } from './utils/translations';
 import InputForm from './components/InputForm';
 import LoadingIndicator from './components/LoadingIndicator';
 import AnalysisDashboard from './components/AnalysisDashboard';
@@ -22,7 +23,8 @@ export type AppView = 'dashboard' | 'input' | 'loadingSourcing' | 'sourcingSelec
 
 const defaultPrefs: UIPreferences = {
     theme: 'default',
-    iconStyle: 'line'
+    iconStyle: 'line',
+    language: 'uz-latn' // Added language preference
 };
 
 const App: React.FC = () => {
@@ -57,7 +59,18 @@ const App: React.FC = () => {
           setCompanyProfile(storedProfile);
           if (storedProfile.uiPreferences) {
             setUiPrefs(storedProfile.uiPreferences);
+            // Set language from profile if available
+            if (storedProfile.uiPreferences.language) {
+              setLanguage(storedProfile.uiPreferences.language);
+            }
           }
+      }
+
+      // Initialize language from localStorage if not set in profile
+      const savedLanguage = localStorage.getItem('ai-broker-language') as 'uz-latn' | 'uz-cyrl' | 'ru' | null;
+      if (savedLanguage && (!storedProfile || !storedProfile.uiPreferences || !storedProfile.uiPreferences.language)) {
+        setLanguage(savedLanguage);
+        setUiPrefs(prev => ({ ...prev, language: savedLanguage }));
       }
 
       const storedContracts = smartStorage.getItem<ContractAnalysisResult[]>('ai-broker-contracts');
@@ -366,6 +379,10 @@ const App: React.FC = () => {
 
   const handlePrefsChange = (prefs: UIPreferences) => {
       setUiPrefs(prefs);
+      // Set language when preferences change
+      if (prefs.language) {
+        setLanguage(prefs.language);
+      }
   }
 
   const renderContent = () => {

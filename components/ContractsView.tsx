@@ -40,7 +40,7 @@ const AnalysisDetailModal: React.FC<{ contract: ContractAnalysisResult; onClose:
         { id: 'overview', label: 'Umumiy Ko\'rinish', icon: '📊' },
         { id: 'risks', label: 'Risk Tahlili', icon: '⚠️' },
         { id: 'obligations', label: 'Majburiyatlar', icon: '📋' },
-        { id: 'clauses', label: 'Maxsus Bandlar', icon: '📄' },
+        { id: 'clauses', label: t('special-clauses'), icon: '📄' },
         { id: 'timeline', label: 'Vaqt Jadvali', icon: '📅' }
     ];
 
@@ -99,7 +99,7 @@ const AnalysisDetailModal: React.FC<{ contract: ContractAnalysisResult; onClose:
                     <div className="mt-6 grid grid-cols-4 gap-4">
                         <div className="bg-black/20 p-4 rounded-xl border border-border/50 text-center">
                             <div className="text-2xl font-bold text-text-primary">{riskStats.total}</div>
-                            <div className="text-sm text-text-secondary">Jami Bandlar</div>
+                            <div className="text-sm text-text-secondary">{t('total-clauses')}</div>
                         </div>
                         <div className="bg-status-danger/10 p-4 rounded-xl border border-status-danger/30 text-center">
                             <div className="text-2xl font-bold text-status-danger">{riskStats.high}</div>
@@ -171,13 +171,13 @@ const AnalysisDetailModal: React.FC<{ contract: ContractAnalysisResult; onClose:
                     {activeTab === 'risks' && (
                         <div className="space-y-4">
                             <h4 className="font-bold text-xl text-text-primary mb-4 flex items-center gap-3">
-                                <span className="text-2xl">⚠️</span> Detallashtirilgan Risk Tahlili
+                                <span className="text-2xl">⚠️</span> Detallashtirilgan {t('risk-analysis')}
                             </h4>
                             {contract.riskAnalysis.map((item, index) => (
                                 <div key={index} className={`p-5 border-l-4 rounded-r-xl shadow-lg transition-all duration-300 hover:shadow-xl ${riskCategoryStyles[item.riskCategory]}`}>
                                     <div className="flex justify-between items-start mb-3">
                                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${riskCategoryStyles[item.riskCategory]}`}>
-                                            {item.riskCategory} Risk
+                                            {item.riskCategory} {t('sort-risk')}
                                         </span>
                                         <div className="text-xs text-text-secondary">Band #{index + 1}</div>
                                     </div>
@@ -208,7 +208,7 @@ const AnalysisDetailModal: React.FC<{ contract: ContractAnalysisResult; onClose:
                     {activeTab === 'obligations' && (
                         <div className="space-y-6">
                             <h4 className="font-bold text-xl text-text-primary mb-4 flex items-center gap-3">
-                                <span className="text-2xl">📋</span> Asosiy Majburiyatlar va Javobgarliklar
+                                <span className="text-2xl">📋</span> {t('main-obligations')}
                             </h4>
                             <div className="grid gap-4">
                                 {contract.keyObligations.map((item, index) => (
@@ -242,7 +242,7 @@ const AnalysisDetailModal: React.FC<{ contract: ContractAnalysisResult; onClose:
                         <div className="space-y-6">
                             <div>
                                 <h4 className="font-bold text-xl text-text-primary mb-4 flex items-center gap-3">
-                                    <span className="text-2xl">⚡</span> Jarima va Sanksiyalar
+                                    <span className="text-2xl">⚡</span> {t('penalties')}
                                 </h4>
                                 <div className="space-y-3">
                                     {contract.penaltyClauses.length > 0 ? contract.penaltyClauses.map((clause, index) => (
@@ -259,7 +259,7 @@ const AnalysisDetailModal: React.FC<{ contract: ContractAnalysisResult; onClose:
                                     )) : (
                                         <div className="text-center py-8 bg-black/10 rounded-xl border border-border/50">
                                             <div className="text-4xl mb-2">✅</div>
-                                            <p className="text-text-secondary">Maxsus jarima bandlari topilmadi</p>
+                                            <p className="text-text-secondary">{t('no-penalty-clauses')}</p>
                                         </div>
                                     )}
                                 </div>
@@ -267,7 +267,7 @@ const AnalysisDetailModal: React.FC<{ contract: ContractAnalysisResult; onClose:
 
                             <div>
                                 <h4 className="font-bold text-xl text-text-primary mb-4 flex items-center gap-3">
-                                    <span className="text-2xl">🌊</span> Fors-major va Favqulodda Holatlari
+                                    <span className="text-2xl">🌊</span> {t('force-majeure')}
                                 </h4>
                                 <div className="space-y-3">
                                     {contract.forceMajeureClauses.length > 0 ? contract.forceMajeureClauses.map((clause, index) => (
@@ -284,7 +284,7 @@ const AnalysisDetailModal: React.FC<{ contract: ContractAnalysisResult; onClose:
                                     )) : (
                                         <div className="text-center py-8 bg-black/10 rounded-xl border border-border/50">
                                             <div className="text-4xl mb-2">ℹ️</div>
-                                            <p className="text-text-secondary">Fors-major bandlari topilmadi</p>
+                                            <p className="text-text-secondary">{t('no-force-majeure')}</p>
                                         </div>
                                     )}
                                 </div>
@@ -295,7 +295,7 @@ const AnalysisDetailModal: React.FC<{ contract: ContractAnalysisResult; onClose:
                     {activeTab === 'timeline' && (
                         <div className="space-y-6">
                             <h4 className="font-bold text-xl text-text-primary mb-4 flex items-center gap-3">
-                                <span className="text-2xl">📅</span> Shartnoma Vaqt Jadvali
+                                <span className="text-2xl">📅</span> Shartnoma {t('timeline')}
                             </h4>
                             <div className="relative">
                                 <div className="absolute left-6 top-0 bottom-0 w-px bg-gradient-to-b from-brand-primary to-brand-secondary"></div>
@@ -332,13 +332,13 @@ const AnalysisDetailModal: React.FC<{ contract: ContractAnalysisResult; onClose:
                             onClick={() => window.print()}
                             className="bg-black/20 hover:bg-black/40 text-text-secondary hover:text-text-primary font-semibold py-2 px-6 rounded-lg transition-all duration-300 border border-border/50 hover:border-border"
                         >
-                            🖨️ Print
+                            🖨️ {t('print')}
                         </button>
                         <button 
                             onClick={onClose} 
                             className="bg-gradient-to-r from-brand-gradient-from to-brand-gradient-to text-white font-semibold py-2 px-6 rounded-lg hover:shadow-glow transition-all duration-300 shadow-lg"
                         >
-                            Yopish
+                            {t('close')}
                         </button>
                     </div>
                 </div>
@@ -396,7 +396,7 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
             });
             
             if (validFiles.length !== newFiles.length) {
-                setError('Faqat PDF, DOC, DOCX formatdagi fayllar (10MB gacha) qabul qilinadi.');
+                setError(t('file-types-contracts'));
             }
             
             setFiles(prev => [...prev, ...validFiles]);
@@ -425,7 +425,7 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
     const handleSubmit = useCallback((e: React.FormEvent) => {
         e.preventDefault();
         if (files.length === 0) {
-            setError("Tahlil uchun shartnoma faylini tanlang.");
+            setError("{t('contract-upload-description')}");
             return;
         }
         onAnalyze(files);
@@ -566,7 +566,7 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
                                 <UploadIcon className="w-5 h-5 text-brand-primary" />
                                 Fayl Yuklash
                             </h3>
-                            <p className="text-xs text-text-secondary">PDF, DOC, DOCX (max 10MB)</p>
+                            <p className="text-xs text-text-secondary">{t('file-types-contracts')}</p>
                         </div>
                         
                         <div 
@@ -595,8 +595,8 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
                                         <UploadIcon strokeWidth={1.5} />
                                     </div>
                                     <div>
-                                        <p className="text-text-primary font-semibold">Fayl tanlang yoki shu yerga olib keling</p>
-                                        <p className="text-text-secondary text-sm mt-1">Bir nechta faylni birdan yuklashingiz mumkin</p>
+                                        <p className="text-text-primary font-semibold">{t('drag-drop-text')}</p>
+                                        <p className="text-text-secondary text-sm mt-1">{t('multiple-files')}</p>
                                     </div>
                                 </div>
                             </label>
@@ -604,7 +604,7 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
 
                         {files.length > 0 && (
                             <div className="mt-6 space-y-3">
-                                <h4 className="text-sm font-semibold text-text-primary">Tanlangan fayllar ({files.length}):</h4>
+                                <h4 className="text-sm font-semibold text-text-primary">{t('selected-files-contracts')} ({files.length}):</h4>
                                 {files.map((file, index) => (
                                     <div key={index} className="flex items-center justify-between bg-brand-primary/10 p-3 rounded-lg border border-brand-primary/20">
                                         <div className="flex items-center gap-3 min-w-0">
@@ -653,7 +653,7 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
                             <div>
                                 <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary flex items-center gap-3">
                                     <span className="text-3xl">📋</span>
-                                    Elite Contract Archive
+                                    {t('elite-contract-archive')}
                                 </h3>
                                 <p className="text-text-secondary text-sm mt-1">
                                     {filteredAndSortedContracts.length} ta shartnoma {contracts.length !== filteredAndSortedContracts.length ? `(${contracts.length} ta dan filtrlangan)` : ''}
@@ -678,7 +678,7 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
                                     <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-secondary" />
                                     <input
                                         type="text"
-                                        placeholder="Shartnoma qidirish..."
+                                        placeholder={t('search-contracts')}
                                         value={filters.search}
                                         onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                                         className="w-full pl-10 pr-4 py-3 bg-black/20 border border-border/50 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-text-primary placeholder-text-secondary transition-all duration-300"
@@ -691,10 +691,10 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
                                     onChange={(e) => setFilters(prev => ({ ...prev, risk: e.target.value }))}
                                     className="w-full p-3 bg-black/20 border border-border/50 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-text-primary transition-all duration-300"
                                 >
-                                    <option value="all">Barcha risk darajalari</option>
-                                    <option value="high">Yuqori risk</option>
-                                    <option value="medium">O'rta risk</option>
-                                    <option value="low">Past risk</option>
+                                    <option value="all">{t('all-risk-levels')}</option>
+                                    <option value="high">{t('high-risk')}</option>
+                                    <option value="medium">{t('medium-risk')}</option>
+                                    <option value="low">{t('low-risk')}</option>
                                 </select>
                                 
                                 {/* Recommendation Filter */}
@@ -703,10 +703,10 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
                                     onChange={(e) => setFilters(prev => ({ ...prev, recommendation: e.target.value }))}
                                     className="w-full p-3 bg-black/20 border border-border/50 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-text-primary transition-all duration-300"
                                 >
-                                    <option value="all">Barcha tavsiyalar</option>
-                                    <option value="recommended">Tavsiya etiladi</option>
-                                    <option value="negotiate">Muzokara kerak</option>
-                                    <option value="risky">Yuqori riskli</option>
+                                    <option value="all">{t('all-recommendations')}</option>
+                                    <option value="recommended">{t('recommended')}</option>
+                                    <option value="negotiate">{t('negotiate')}</option>
+                                    <option value="risky">{t('high-risk-contract')}</option>
                                 </select>
                             </div>
                         )}
@@ -716,13 +716,13 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
                             <div className="flex flex-wrap items-center gap-4">
                                 <div className="flex items-center gap-2 text-sm text-text-secondary">
                                     <SortIcon className="w-4 h-4" />
-                                    <span>Saralash:</span>
+                                    <span>{t('sort-by')}</span>
                                 </div>
                                 <div className="flex gap-2">
                                     {[
-                                        { value: 'date-desc', label: 'Yangi' },
-                                        { value: 'date-asc', label: 'Eski' },
-                                        { value: 'title-asc', label: 'Nom A-Z' },
+                                        { value: 'date-desc', label: t('sort-newest') },
+                                        { value: 'date-asc', label: t('sort-oldest') },
+                                        { value: 'title-asc', label: t('sort-name-az') },
                                         { value: 'risk-desc', label: 'Risk' }
                                     ].map((option) => (
                                         <button
@@ -771,7 +771,7 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
                                                             ? 'text-yellow-400 hover:text-yellow-300 scale-110' 
                                                             : 'text-text-secondary hover:text-yellow-400'
                                                     }`}
-                                                    title={isBookmarked ? "Saqlangandan olib tashlash" : "Saqlash"}
+                                                    title={isBookmarked ? t('remove-bookmark') : t('bookmark')}
                                                 >
                                                     <BookmarkIcon className="w-5 h-5" />
                                                 </button>
@@ -788,7 +788,7 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
                                                 </div>
                                                 <div className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs font-semibold ${riskInfo.bg} ${riskInfo.color}`}>
                                                     <div className={`w-2 h-2 rounded-full bg-current`}></div>
-                                                    <span>{riskInfo.level} Risk</span>
+                                                    <span>{riskInfo.level} {t('risk')}</span>
                                                 </div>
                                             </div>
                                             
@@ -816,18 +816,18 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
                                             <button 
                                                 onClick={() => setActiveContract(contract)} 
                                                 className="p-3 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white hover:shadow-glow transition-all duration-300 transform hover:scale-105" 
-                                                title="Batafsil ko'rish"
+                                                title="{t('view-details')}"
                                             >
                                                 <EyeIcon className="w-5 h-5" />
                                             </button>
                                             <button 
                                                 onClick={() => {
-                                                    if(confirm("Bu shartnoma tahlilini o'chirmoqchimisiz? Bu amalni qaytarib bo'lmaydi.")) {
+                                                    if(confirm(t('delete-contract-confirm'))) {
                                                         onDelete(contract.id);
                                                     }
                                                 }} 
                                                 className="p-3 rounded-xl bg-black/20 text-text-secondary hover:text-status-danger hover:bg-status-danger/10 transition-all duration-300 transform hover:scale-105" 
-                                                title="O'chirish"
+                                                title="{t('delete-contract')}"
                                             >
                                                 <TrashIcon className="w-5 h-5" />
                                             </button>
@@ -840,19 +840,19 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
                                 {contracts.length === 0 ? (
                                     <div>
                                         <div className="text-6xl mb-4">📄</div>
-                                        <h3 className="text-xl font-bold text-text-primary mb-2">Shartnoma Tahlili Yo'q</h3>
-                                        <p className="text-text-secondary max-w-md mx-auto">Hali hech qanday shartnoma tahlil qilinmagan. Shartnoma faylini yuklab, AI-powered yuridik xulosa oling.</p>
+                                        <h3 className="text-xl font-bold text-text-primary mb-2">{t('no-contracts-title')}</h3>
+                                        <p className="text-text-secondary max-w-md mx-auto">{t('no-contracts-description')}</p>
                                     </div>
                                 ) : (
                                     <div>
                                         <div className="text-6xl mb-4">🔍</div>
-                                        <h3 className="text-xl font-bold text-text-primary mb-2">Filter bo'yicha natija yo'q</h3>
-                                        <p className="text-text-secondary">Qidiruv mezonlaringizni o'zgartiring yoki filtrlarni tozalang.</p>
+                                        <h3 className="text-xl font-bold text-text-primary mb-2">{t('no-results-title')}</h3>
+                                        <p className="text-text-secondary">{t('no-results-description')}</p>
                                         <button
                                             onClick={() => setFilters({ search: '', risk: 'all', recommendation: 'all', dateRange: 'all', sortBy: 'date-desc' })}
                                             className="mt-4 bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold py-2 px-4 rounded-lg hover:shadow-glow transition-all duration-300"
                                         >
-                                            Filtrlarni Tozalash
+                                            {t('clear-filters')}
                                         </button>
                                     </div>
                                 )}
