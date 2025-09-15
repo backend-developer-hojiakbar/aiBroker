@@ -3,6 +3,7 @@ import React, { useState, useRef, DragEvent, useMemo, useEffect, useCallback } f
 import type { ContractAnalysisResult, ContractClauseAnalysis } from '../types';
 import { ContractIcon, UploadIcon, FileIcon, XIcon, AnalyzeIcon, TrashIcon, EyeIcon, SearchIcon, FilterIcon, SortIcon, BookmarkIcon, CalendarIcon, AlertIcon, CheckIcon } from './Icons';
 import { smartStorage } from '../utils/smartStorage';
+import { t } from '../utils/translations';
 
 interface ContractsViewProps {
     contracts: ContractAnalysisResult[];
@@ -628,7 +629,7 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
 
                         {error && (
                             <div className="mt-4 p-3 bg-status-danger/10 border border-status-danger/30 rounded-lg">
-                                <p className="text-status-danger text-sm text-center font-semibold">{error}</p>
+                                <p className="text-status-danger text-sm text-center font-semibold">{error || t('contract-upload-description')}</p>
                             </div>
                         )}
 
@@ -816,7 +817,7 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
                                             <button 
                                                 onClick={() => setActiveContract(contract)} 
                                                 className="p-3 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white hover:shadow-glow transition-all duration-300 transform hover:scale-105" 
-                                                title="{t('view-details')}"
+                                                title={t('view-details')}
                                             >
                                                 <EyeIcon className="w-5 h-5" />
                                             </button>
@@ -827,7 +828,7 @@ const ContractsView: React.FC<ContractsViewProps> = React.memo(({ contracts, onA
                                                     }
                                                 }} 
                                                 className="p-3 rounded-xl bg-black/20 text-text-secondary hover:text-status-danger hover:bg-status-danger/10 transition-all duration-300 transform hover:scale-105" 
-                                                title="{t('delete-contract')}"
+                                                title={t('delete-contract')}
                                             >
                                                 <TrashIcon className="w-5 h-5" />
                                             </button>
