@@ -1,22 +1,21 @@
-
 import React, { useState, useRef, DragEvent } from 'react';
 import type { TenderData, Platform } from '../types';
 import { Platform as PlatformEnum } from '../types';
-import { UploadIcon, FileIcon, XIcon, AnalyzeIcon, InfoIcon, PlusIcon, TrashIcon } from './Icons';
+import { UploadIcon, FileIcon, XIcon, AnalyzeIcon, PlusIcon, TrashIcon } from './Icons';
 import { InfoTooltip } from './Card';
 import { t } from '../utils/translations';
 
 interface InputFormProps {
-  onStartAnalysis: (data: TenderData, platform: Platform) => void;
+  onSubmit: (data: TenderData, platform: Platform) => void;
+  companyProfile: any; // Sizning App.tsx faylingizdan kelayotgan prop
 }
 
-const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
+const InputForm: React.FC<InputFormProps> = ({ onSubmit, companyProfile }) => {
   const [files, setFiles] = useState<File[]>([]);
-        const [platform, setPlatform] = useState<Platform>(PlatformEnum.XT_XARID);
+  const [platform, setPlatform] = useState<Platform>(PlatformEnum.XT_XARID);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [includeVat, setIncludeVat] = useState<boolean>(true);
   const [additionalCosts, setAdditionalCosts] = useState<{ description: string; amount: string }[]>([]);
 
@@ -34,24 +33,20 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
       setAdditionalCosts(additionalCosts.filter((_, i) => i !== index));
   };
 
-
   const handleFileSelection = (selectedFiles: FileList | null) => {
     if (selectedFiles) {
         setError(null);
         const newFiles = Array.from(selectedFiles);
-        
         if (files.length + newFiles.length > 3) {
             setError("Bir vaqtning o'zida 3 tadan ko'p fayl yuklab bo'lmaydi.");
             return;
         }
-
         for (const file of newFiles) {
-             if (file.size > 10 * 1024 * 1024) { // 10MB limit
+             if (file.size > 10 * 1024 * 1024) {
                 setError(`"${file.name}" fayli 10MB dan katta. Iltimos, kichikroq fayl tanlang.`);
                 return;
              }
         }
-        
         setFiles(prev => [...prev, ...newFiles]);
     }
   }
@@ -100,14 +95,13 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
         return;
       }
       const tenderData: TenderData = { files, includeVat, additionalCosts: parsedCosts };
-    onStartAnalysis(tenderData, platform);
+    onSubmit(tenderData, platform);
   };
 
   const isSubmitDisabled = files.length === 0;
 
   return (
     <div className="max-w-4xl mx-auto bg-gradient-to-br from-surface to-black/30 p-8 sm:p-10 rounded-2xl shadow-2xl animate-slide-up border border-brand-primary/20 relative overflow-hidden">
-      {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0 bg-gradient-to-r from-brand-primary via-brand-secondary to-accent opacity-10"></div>
         <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -120,7 +114,6 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
         </svg>
       </div>
       
-      {/* Header */}
       <div className="relative z-10 text-center mb-8">
         <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-gradient-from to-brand-gradient-to mb-4">
           {t('ai-broker-elite-analysis-system')}
@@ -166,7 +159,6 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
         <div className="mt-8 pt-6 border-t border-border">
             <h2 className="text-xl font-bold text-center text-text-primary mb-4">{t('financial-settings')}</h2>
 
-            {/* VAT Toggle */}
             <div className="flex items-center justify-between bg-black/20 p-3 rounded-lg">
                 <label htmlFor="includeVat" className="flex items-center text-sm font-bold text-text-primary cursor-pointer">
                     {t('vat-calculation')}
@@ -181,7 +173,6 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
                 </label>
             </div>
 
-            {/* Additional Costs */}
             <div className="mt-4">
                 <div className="flex items-center justify-between">
                     <h3 className="flex items-center text-sm font-bold text-text-primary">
@@ -243,19 +234,10 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
                         />
                         <div className="flex items-center justify-center text-center">
                             <div className="flex flex-col gap-2">
-                                <div className={`w-4 h-4 rounded-full border-2 mx-auto transition-all duration-200 ${
-                                    platform === p
-                                        ? 'border-brand-primary bg-brand-primary'
-                                        : 'border-text-secondary'
-                                }`}>
-                                    {platform === p && (
-                                        <div className="w-2 h-2 bg-white rounded-full mx-auto mt-1"></div>
-                                    )}
-                                </div>
                                 <div className={`font-bold text-lg transition-colors duration-200 ${
                                     platform === p ? 'text-brand-primary' : 'text-text-primary'
                                 }`}>
-                                    {p}
+                                    {p === PlatformEnum.XT_XARID ? "XT-Xarid" : "Xarid.uzex.uz"}
                                 </div>
                                 <div className={`text-sm transition-colors duration-200 ${
                                     platform === p ? 'text-brand-primary' : 'text-text-secondary'
@@ -267,9 +249,6 @@ const InputForm: React.FC<InputFormProps> = ({ onStartAnalysis }) => {
                                 </div>
                             </div>
                         </div>
-                        {platform === p && (
-                            <div className="absolute inset-0 border-2 border-brand-primary rounded-xl pointer-events-none opacity-50 animate-pulse"></div>
-                        )}
                     </label>
                 ))}
             </div>

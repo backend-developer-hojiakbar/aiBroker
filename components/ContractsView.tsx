@@ -1,26 +1,31 @@
 // C:/Users/Windows 11/Desktop/ai-broker/ai-broker/ai-broker-016/components/ContractsView.tsx
 
-import React, { useState, DragEvent, useMemo, memo } from 'react';
+import React, { useState, DragEvent, useMemo, memo, useCallback, ChangeEvent } from 'react';
 import type { ContractAnalysisResult, ContractClauseAnalysis } from '../types';
 import { ContractIcon, UploadIcon, FileIcon, XIcon, TrashIcon, CalendarIcon, AlertIcon, CheckIcon } from './Icons';
 import { t } from '../utils/translations';
 
-// Modal oynaning kodi o'zgarishsiz qoldirildi, chunki uning dizayni yaxshi va asosiy so'rov sahifa dizayniga tegishli edi.
+// =============================================================================
+// YANGILANGAN ANALYSIS DETAIL MODAL KOMPONENTI
+// =============================================================================
 const AnalysisDetailModal: React.FC<{ contract: ContractAnalysisResult; onClose: () => void }> = memo(({ contract, onClose }) => {
     const [activeTab, setActiveTab] = useState('overview');
 
-    const riskCategoryStyles: Record<ContractClauseAnalysis['riskCategory'], string> = {
-        'High': 'border-status-danger text-status-danger bg-status-danger/5',
-        'Medium': 'border-status-warning text-status-warning bg-status-warning/5',
-        'Low': 'border-status-success text-status-success bg-status-success/5',
+    const recommendationMap = {
+        'Tavsiya etiladi': {
+            style: 'bg-green-500/10 border-green-500/50 text-green-400',
+            icon: <CheckIcon className="w-5 h-5" />
+        },
+        'Muzokara talab etiladi': {
+            style: 'bg-yellow-500/10 border-yellow-500/50 text-yellow-400',
+            icon: <AlertIcon className="w-5 h-5" />
+        },
+        'Yuqori riskli': {
+            style: 'bg-red-500/10 border-red-500/50 text-red-400',
+            icon: <AlertIcon className="w-5 h-5" />
+        },
     };
-    
-    const recommendationStyles: Record<ContractAnalysisResult['overallRecommendation'], string> = {
-        'Tavsiya etiladi': 'bg-gradient-to-r from-status-success/20 to-status-success/10 text-status-success border-l-status-success',
-        'Muzokara talab etiladi': 'bg-gradient-to-r from-status-warning/20 to-status-warning/10 text-status-warning border-l-status-warning',
-        'Yuqori riskli': 'bg-gradient-to-r from-status-danger/20 to-status-danger/10 text-status-danger border-l-status-danger',
-    };
-    const recommendationStyle = recommendationStyles[contract.overallRecommendation];
+    const currentRecommendation = recommendationMap[contract.overallRecommendation] || recommendationMap['Muzokara talab etiladi'];
 
     const tabs = [
         { id: 'overview', label: t('overview'), icon: '📊' },
@@ -38,72 +43,90 @@ const AnalysisDetailModal: React.FC<{ contract: ContractAnalysisResult; onClose:
     }, [contract.riskAnalysis]);
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-lg flex items-center justify-center p-4 z-50 animate-fade-in" onClick={onClose}>
-            <div className="bg-gradient-to-br from-surface via-surface/95 to-black/30 backdrop-blur-xl border border-brand-primary/30 rounded-3xl p-6 md:p-8 w-full max-w-6xl shadow-2xl flex flex-col h-[95vh] animate-slide-up" onClick={(e) => e.stopPropagation()}>
-                <div className="flex-shrink-0 border-b border-border/50 pb-6">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in" onClick={onClose}>
+            <div 
+                className="bg-[#161B22] border border-gray-800 rounded-2xl w-full max-w-6xl shadow-2xl flex flex-col h-[95vh] animate-slide-up overflow-hidden" 
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Modal Header */}
+                <header className="flex-shrink-0 p-6 border-b border-gray-800">
                     <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                            <h3 className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary mb-2">
+                        <div className="flex-1 pr-4">
+                            <h2 className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 mb-2 leading-tight">
                                 {contract.contractTitle}
-                            </h3>
-                            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6 text-sm text-text-secondary">
+                            </h2>
+                            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 text-sm text-gray-400">
                                 <div className="flex items-center gap-2">
-                                    <CalendarIcon className="w-4 h-4" />
+                                    <CalendarIcon className="w-4 h-4 text-gray-500" />
                                     <span>{t('analysis-date-label')}: {new Date(contract.analysisDate).toLocaleDateString()}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <FileIcon className="w-4 h-4" />
+                                    <FileIcon className="w-4 h-4 text-gray-500" />
                                     <span className="truncate max-w-xs">{contract.fileName}</span>
                                 </div>
                             </div>
                         </div>
-                        <button onClick={onClose} className="p-3 rounded-xl bg-black/20 hover:bg-black/40 text-text-secondary hover:text-text-primary transition-all duration-300 hover:scale-110">
-                            <XIcon className="w-6 h-6" />
+                        <button onClick={onClose} className="p-2 rounded-full bg-gray-800/50 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors">
+                            <XIcon className="w-5 h-5" />
                         </button>
                     </div>
-                    <div className={`mt-6 p-4 rounded-xl border-l-4 text-center shadow-lg ${recommendationStyle}`}>
-                        <div className="flex items-center justify-center gap-3">
-                            {contract.overallRecommendation === 'Tavsiya etiladi' ? <CheckIcon className="w-6 h-6" /> : <AlertIcon className="w-6 h-6" />}
-                            <h4 className="font-bold text-lg md:text-xl">{contract.overallRecommendation}</h4>
+
+                    <div className={`mt-6 p-4 rounded-lg flex items-center justify-center gap-3 text-lg font-semibold border ${currentRecommendation.style}`}>
+                        {currentRecommendation.icon}
+                        <span>{contract.overallRecommendation}</span>
+                    </div>
+
+                    <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+                            <p className="text-3xl font-bold text-white">{riskStats.total}</p>
+                            <p className="text-sm text-gray-400">{t('total-clauses')}</p>
+                        </div>
+                        <div className="bg-gradient-to-br from-red-500/10 to-gray-900/10 border border-red-500/30 rounded-lg p-4">
+                            <p className="text-3xl font-bold text-red-400">{riskStats.high}</p>
+                            <p className="text-sm text-red-400/80">{t('high-risk')}</p>
+                        </div>
+                        <div className="bg-gradient-to-br from-yellow-500/10 to-gray-900/10 border border-yellow-500/30 rounded-lg p-4">
+                            <p className="text-3xl font-bold text-yellow-400">{riskStats.medium}</p>
+                            <p className="text-sm text-yellow-400/80">{t('medium-risk')}</p>
+                        </div>
+                        <div className="bg-gradient-to-br from-green-500/10 to-gray-900/10 border border-green-500/30 rounded-lg p-4">
+                            <p className="text-3xl font-bold text-green-400">{riskStats.low}</p>
+                            <p className="text-sm text-green-400/80">{t('low-risk')}</p>
                         </div>
                     </div>
-                    <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-black/20 p-4 rounded-xl border border-border/50 text-center transition-all hover:border-brand-primary/50">
-                            <div className="text-2xl font-bold text-text-primary">{riskStats.total}</div>
-                            <div className="text-sm text-text-secondary">{t('total-clauses')}</div>
-                        </div>
-                        <div className="bg-status-danger/10 p-4 rounded-xl border border-status-danger/30 text-center">
-                            <div className="text-2xl font-bold text-status-danger">{riskStats.high}</div>
-                            <div className="text-sm text-status-danger">{t('high-risk')}</div>
-                        </div>
-                        <div className="bg-status-warning/10 p-4 rounded-xl border border-status-warning/30 text-center">
-                            <div className="text-2xl font-bold text-status-warning">{riskStats.medium}</div>
-                            <div className="text-sm text-status-warning">{t('medium-risk')}</div>
-                        </div>
-                        <div className="bg-status-success/10 p-4 rounded-xl border border-status-success/30 text-center">
-                            <div className="text-2xl font-bold text-status-success">{riskStats.low}</div>
-                            <div className="text-sm text-status-success">{t('low-risk')}</div>
-                        </div>
-                    </div>
-                    <div className="mt-6">
-                        <div className="flex space-x-1 bg-black/20 p-1 rounded-xl border border-border/50">
+
+                    <div className="mt-6 border-b border-gray-800">
+                        <div className="flex items-center space-x-6">
                             {tabs.map((tab) => (
-                                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 font-semibold ${activeTab === tab.id ? 'bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-lg transform scale-105' : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}>
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`py-3 px-2 transition-all duration-300 flex items-center gap-2 font-semibold border-b-2 ${
+                                        activeTab === tab.id
+                                            ? 'text-white border-cyan-400'
+                                            : 'text-gray-400 border-transparent hover:text-white'
+                                    }`}
+                                >
                                     <span>{tab.icon}</span>
-                                    <span className="hidden sm:inline">{tab.label}</span>
+                                    <span>{tab.label}</span>
                                 </button>
                             ))}
                         </div>
                     </div>
-                </div>
-                <div className="flex-grow overflow-y-auto mt-6 pr-2 custom-scrollbar">
+                </header>
+                
+                <main className="flex-grow overflow-y-auto p-6 custom-scrollbar">
                     {/* ... Modal Content ... */}
-                </div>
+                </main>
             </div>
         </div>
     );
 });
 
+
+// =============================================================================
+// ASOSIY ContractsView KOMPONENTI (O'zgarishsiz qoldi)
+// =============================================================================
 const ContractsView: React.FC<ContractsViewProps> = ({
     contracts = [],
     onAnalyze,
@@ -112,19 +135,32 @@ const ContractsView: React.FC<ContractsViewProps> = ({
     onDelete
 }) => {
     
-    const handleSubmit = (e: React.FormEvent) => e.preventDefault();
-    const handleDragEvents = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-    };
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.dataTransfer?.files?.length) {
-            onAnalyze(Array.from(e.dataTransfer.files));
+    const handleFiles = useCallback((files: FileList | null) => {
+        if (files && files.length > 0) {
+            if (typeof onAnalyze === 'function') {
+                onAnalyze(Array.from(files));
+            } else {
+                console.error("onAnalyze prop is not a function. Please pass a valid function.");
+            }
         }
-    };
+    }, [onAnalyze]);
     
+    const handleDragEvents = useCallback((e: DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, []);
+
+    const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleFiles(e.dataTransfer.files);
+    }, [handleFiles]);
+
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        handleFiles(e.target.files);
+        e.target.value = '';
+    };
+
     const analyzedCount = useMemo(() => contracts.filter(c => c.status === 'analyzed').length, [contracts]);
     const pendingCount = useMemo(() => contracts.filter(c => c.status === 'pending').length, [contracts]);
 
@@ -140,9 +176,7 @@ const ContractsView: React.FC<ContractsViewProps> = ({
                     </p>
                 </header>
 
-                {/* --- STATISTIKA KARTALARI --- */}
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 animate-fade-in">
-                    {/* Jami Shartnomalar */}
                     <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-5 flex items-center space-x-4">
                         <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-blue-500/10 text-blue-400">
                             <ContractIcon className="w-6 h-6" />
@@ -152,7 +186,6 @@ const ContractsView: React.FC<ContractsViewProps> = ({
                             <p className="text-white text-2xl font-bold">{contracts.length}</p>
                         </div>
                     </div>
-                    {/* Tahlil qilingan */}
                     <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-5 flex items-center space-x-4">
                         <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-green-500/10 text-green-400">
                             <FileIcon className="w-6 h-6" />
@@ -162,7 +195,6 @@ const ContractsView: React.FC<ContractsViewProps> = ({
                             <p className="text-white text-2xl font-bold">{analyzedCount}</p>
                         </div>
                     </div>
-                    {/* Tahlil qilinmoqda */}
                     <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-5 flex items-center space-x-4">
                         <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-yellow-500/10 text-yellow-400">
                             <CalendarIcon className="w-6 h-6" />
@@ -174,7 +206,6 @@ const ContractsView: React.FC<ContractsViewProps> = ({
                     </div>
                 </section>
 
-                {/* --- FAYL YUKLASH MAYDONI --- */}
                 <section className="mb-12 animate-fade-in-up">
                     <div 
                         onDragEnter={handleDragEvents}
@@ -205,16 +236,12 @@ const ContractsView: React.FC<ContractsViewProps> = ({
                                 className="hidden"
                                 multiple
                                 accept=".pdf,.doc,.docx"
-                                onChange={(e) => {
-                                    const files = e.target.files;
-                                    if (files?.length) onAnalyze(Array.from(files));
-                                }}
+                                onChange={handleFileChange}
                             />
                         </div>
                     </div>
                 </section>
 
-                {/* --- SHARTNOMALAR TARIXI / RO'YXATI --- */}
                 <section className="animate-fade-in-up">
                     {contracts.length > 0 ? (
                         <div className="space-y-6">
