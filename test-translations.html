@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translation Test</title>
+</head>
+<body>
+    <h1>Translation Test</h1>
+    <div id="test-results"></div>
+
+    <script type="module">
+        import { t, setLanguage, getCurrentLanguage } from './utils/translations.ts';
+
+        // Test all languages
+        const languages = ['uz-latn', 'uz-cyrl', 'ru', 'en'];
+        const testKeys = [
+            'dashboard-title',
+            'nav-dashboard',
+            'new-analysis',
+            'language-selector',
+            'uzbek-latin',
+            'uzbek-cyrillic',
+            'russian',
+            'english'
+        ];
+
+        let results = '<h2>Translation Test Results:</h2><ul>';
+
+        languages.forEach(lang => {
+            results += `<li><strong>Testing ${lang}:</strong><ul>`;
+            setLanguage(lang);
+            
+            testKeys.forEach(key => {
+                const translation = t(key);
+                results += `<li>${key}: ${translation}</li>`;
+            });
+            
+            results += '</ul></li>';
+        });
+
+        results += `</ul><p><strong>Current language:</strong> ${getCurrentLanguage()}</p>`;
+        
+        document.getElementById('test-results').innerHTML = results;
+    </script>
+</body>
+</html>

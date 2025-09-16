@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { AnalysisResult, TenderData, Platform, LotPassport, AnalysisContext, TenderStatus, WinnerInfo, CompanyProfile, ContractAnalysisResult, AIInsight, InsightActionView, VisionaryInsight, UIPreferences, DiscoveredTender, SourcingRecommendation, SourcingResult } from './types';
 import { generateFinalAnalysis, findSourcingOptions, analyzeContract, generateDashboardInsights, generateVisionaryInsights } from './services/geminiService';
@@ -16,7 +15,6 @@ import ChatInterface from './components/ChatInterface';
 import ProfileSettings from './components/ProfileSettings';
 import CompetitorsView from './components/CompetitorsView';
 import ContractsView from './components/ContractsView';
-import GoogleSearchTest from './components/GoogleSearchTest';
 import { ErrorIcon, LogoIcon, BotIcon } from './components/Icons';
 
 export type AppView = 'dashboard' | 'input' | 'loadingSourcing' | 'sourcingSelection' | 'loadingAnalysis' | 'results' | 'analytics' | 'sharedReport' | 'profile' | 'competitors' | 'contracts' | 'loadingContract';
@@ -67,7 +65,7 @@ const App: React.FC = () => {
       }
 
       // Initialize language from localStorage if not set in profile
-      const savedLanguage = localStorage.getItem('ai-broker-language') as 'uz-latn' | 'uz-cyrl' | 'ru' | null;
+      const savedLanguage = localStorage.getItem('ai-broker-language') as 'uz-latn' | 'uz-cyrl' | 'ru' | 'en' | null;
       if (savedLanguage && (!storedProfile || !storedProfile.uiPreferences || !storedProfile.uiPreferences.language)) {
         setLanguage(savedLanguage);
         setUiPrefs(prev => ({ ...prev, language: savedLanguage }));
@@ -351,190 +349,175 @@ const App: React.FC = () => {
     }
   };
 
-  const handleUpdateStatus = (status: TenderStatus, winnerInfo: WinnerInfo) => {
-    if (!activeTender) return;
-    
-    const updatedTenders = allTenders.map(t => t.id === activeTender.id ? {...t, status, winnerInfo} : t);
+  const handleSetTenderOutcome = (tenderId: string, status: TenderStatus, winner?: WinnerInfo) => {
+    const updatedTenders = allTenders.map(t => 
+      t.id === tenderId ? { ...t, status, winner, completionDate: new Date().toISOString() } : t
+    );
     persistTenders(updatedTenders);
-    setActiveTender(prev => prev ? {...prev, status, winnerInfo} : null);
-    setOutcomeToSet(null);
-    alert("Ma'lumotlaringiz saqlandi, tahlillarimizni yaxshilashga yordam berganingiz uchun rahmat!");
-  }
-
-  const handleBulkAction = (tenderIds: string[], action: 'archive' | 'unarchive' | 'delete') => {
-      let updatedTenders = [...allTenders];
-      if (action === 'delete') {
-          if(!confirm(`${tenderIds.length} ta tanlangan tahlilni o'chirishni tasdiqlaysizmi? Bu amalni bekor qilib bo'lmaydi.`)) return;
-          updatedTenders = allTenders.filter(t => !tenderIds.includes(t.id));
-      } else {
-          const toArchive = action === 'archive';
-          updatedTenders = allTenders.map(t => tenderIds.includes(t.id) ? { ...t, isArchived: toArchive } : t);
-      }
-      persistTenders(updatedTenders);
-  };
-  
-  const handleInsightAction = (actionView: InsightActionView) => {
-      setView(actionView);
-  }
-
-  const handlePrefsChange = (prefs: UIPreferences) => {
-      setUiPrefs(prefs);
-      // Set language when preferences change
-      if (prefs.language) {
-        setLanguage(prefs.language);
-      }
-  }
-
-  const renderContent = () => {
-    switch(view) {
-      case 'dashboard':
-        return <Dashboard 
-                  tenders={allTenders} 
-                  insights={insights}
-                  loadingInsights={loadingInsights}
-                  visionaryInsight={visionaryInsight}
-                  loadingVisionary={loadingVisionary}
-                  companyProfile={companyProfile}
-                  onSelect={handleSelectTender} 
-                  onDelete={handleDeleteTender} 
-                  onArchive={handleArchiveTender} 
-                  onNew={() => setView('input')} 
-                  onToggleWatchlist={handleToggleWatchlist} 
-                  onBulkAction={handleBulkAction}
-                  onInsightAction={handleInsightAction}
-               />;
-      case 'analytics':
-        return <Analytics tenders={allTenders} companyProfile={companyProfile} onSelectTender={handleSelectTender} onShowCompetitors={() => setView('competitors')} />;
-      case 'competitors':
-        return <CompetitorsView tenders={allTenders} onBack={() => setView('analytics')} />;
-       case 'profile':
-        return <ProfileSettings profileData={companyProfile} onSave={persistProfile} onPrefsChange={handlePrefsChange} />;
-       case 'contracts':
-        return <ContractsView 
-                  contracts={analyzedContracts} 
-                  onAnalyze={handleAnalyzeContractRequest}
-                  activeContract={activeContract}
-                  setActiveContract={setActiveContract}
-                  onDelete={(contractId) => {
-                      const updated = analyzedContracts.filter(c => c.id !== contractId);
-                      persistContracts(updated);
-                      if (activeContract?.id === contractId) setActiveContract(null);
-                  }}
-               />;
-      case 'loadingContract':
-        return <LoadingIndicator stage={'contract'} />;
-      case 'input':
-        return <InputForm onStartAnalysis={handleStartSourcing} />;
-      case 'loadingSourcing':
-        return <LoadingIndicator stage={'sourcing'} />;
-      case 'sourcingSelection':
-        if (!sourcingResult) {
-            console.error('sourcingSelection view without sourcingResult, redirecting to input');
-            setView('input');
-            return null;
-        }
-        return <SourcingSelection 
-              sourcingResult={sourcingResult}
-              onConfirm={handleGenerateFinalReport}
-              onCancel={() => setView('input')}
-              error={error}
-            />;
-      case 'loadingAnalysis':
-        return <LoadingIndicator stage={'analysis'} />;
-      case 'results':
-        if (!activeTender) {
-            handleResetToDashboard();
-            return null;
-        }
-        const analysisContext: AnalysisContext | null = tenderContext?.text ? {
-            originalTenderText: tenderContext.text,
-            platform: activeTender.platform,
-            analysisResult: activeTender
-        } : { // Fallback context if navigating directly from dashboard
-            originalTenderText: `Tender: ${activeTender.lotPassport?.itemName || 'N/A'}, Buyurtmachi: ${activeTender.lotPassport?.customerName || 'N/A'}`,
-            platform: activeTender.platform,
-            analysisResult: activeTender
-        };
-        return (
-            <>
-              {outcomeToSet && <TenderOutcomeForm preselectedOutcome={outcomeToSet} onSubmit={(status, details) => handleUpdateStatus(status, details)} onClose={() => setOutcomeToSet(null)} />}
-              <AnalysisDashboard 
-                result={activeTender} 
-                allTenders={allTenders}
-                companyProfile={companyProfile}
-                onNavigate={(v) => setView(v)} 
-                onSetOutcome={setOutcomeToSet}
-                onAssignAgent={handleAssignAgent}
-              />
-              {analysisContext && <ChatInterface context={analysisContext} />}
-            </>
-          );
-      case 'sharedReport':
-          return sharedTender ? 
-            <AnalysisDashboard result={sharedTender} allTenders={[]} companyProfile={null} onNavigate={handleResetToDashboard} onSetOutcome={() => {}} onAssignAgent={()=>{}} isReadOnly={true} /> : 
-            <LoadingIndicator stage="sourcing" />;
-      default:
-        return <Dashboard tenders={allTenders} insights={insights} loadingInsights={loadingInsights} visionaryInsight={visionaryInsight} loadingVisionary={loadingVisionary} companyProfile={companyProfile} onSelect={handleSelectTender} onDelete={handleDeleteTender} onArchive={handleArchiveTender} onNew={() => setView('input')} onToggleWatchlist={handleToggleWatchlist} onBulkAction={handleBulkAction} onInsightAction={handleInsightAction}/>;
+    if (activeTender?.id === tenderId) {
+      setActiveTender(prev => (prev ? { ...prev, status, winner, completionDate: new Date().toISOString() } : null));
     }
-  }
+    setOutcomeToSet(null);
+  };
+
+  const handleViewSharedReport = (tender: AnalysisResult) => {
+    setSharedTender(tender);
+    setView('sharedReport');
+  };
+
+  const handleExportToExcel = (tenders: AnalysisResult[]) => {
+    // This would be implemented with a proper Excel export library
+    alert("Excelga eksport qilish funksiyasi hozircha mavjud emas.");
+  };
+
+  const handlePrefsChange = (newPrefs: UIPreferences) => {
+    setUiPrefs(newPrefs);
+    if (companyProfile) {
+      const updatedProfile = { ...companyProfile, uiPreferences: newPrefs };
+      persistProfile(updatedProfile);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background text-text-primary flex">
+    <div className="flex h-screen bg-background">
       <Sidebar 
-        onNavigate={(v) => setView(v)} 
+        onNavigate={setView} 
         currentView={view} 
         isCollapsed={isSidebarCollapsed}
         setCollapsed={setSidebarCollapsed}
         prefs={uiPrefs}
+        onPrefsChange={handlePrefsChange}
       />
-      <div className="flex-1 flex flex-col transition-all duration-300" style={{ paddingLeft: isSidebarCollapsed ? '4rem' : '16rem' }}>
-          <Header currentView={view} onNewAnalysis={() => setView('input')} />
-          <main className="flex-grow p-4 sm:p-6 lg:p-8 overflow-y-auto">
-              {autoAnalysisNotifications.length > 0 && view === 'dashboard' && (
-                  <div className="bg-brand-secondary/20 border-l-4 border-brand-secondary text-purple-100 p-4 rounded-r-lg relative mb-6 animate-fade-in flex items-start shadow-soft" role="alert">
-                    <div className="flex-shrink-0 pt-0.5"><BotIcon className="w-6 h-6 text-brand-secondary" /></div>
-                    <div className="ml-3 flex-1 md:flex md:justify-between">
-                      <div>
-                        <p className="text-sm font-bold text-white">Avtomatik Tahlil</p>
-                        <p className="text-sm mt-1">{autoAnalysisNotifications.length} ta yangi tender sizning mezonlaringiz bo'yicha tahlil qilindi.</p>
-                      </div>
-                      <button onClick={() => setAutoAnalysisNotifications([])} className="mt-3 md:mt-0 md:ml-6 whitespace-nowrap font-semibold text-white/80 hover:text-white" aria-label="Yopish">
-                        Yopish
-                      </button>
-                    </div>
-                  </div>
-              )}
-              {error && (
-                <div className="bg-status-danger/20 border-l-4 border-status-danger text-red-100 p-4 rounded-r-lg relative mb-6 animate-fade-in flex items-start shadow-soft" role="alert">
-                  <div className="flex-shrink-0 pt-0.5"><ErrorIcon /></div>
-                  <div className="ml-3 flex-1 md:flex md:justify-between">
-                    <div>
-                      <p className="text-sm font-bold text-white">Xatolik yuz berdi</p>
-                      <p className="text-sm mt-1">{error}</p>
-                    </div>
-                    <button onClick={() => setError(null)} className="mt-3 md:mt-0 md:ml-6 whitespace-nowrap font-semibold text-white/80 hover:text-white" aria-label="Yopish">
-                      Yopish
-                    </button>
-                  </div>
-                </div>
-              )}
-              {renderContent()}
-          </main>
-          <footer className="w-full mt-auto py-5 px-8 border-t border-border bg-surface">
-            <div className="flex flex-col md:flex-row justify-between items-center text-center md:text-left gap-4">
-              <div className="flex items-center gap-3">
-                  <LogoIcon />
-                  <div>
-                      <p className="font-bold text-text-primary">AI-Broker | Tender Tahlili</p>
-                      <p className="text-xs text-text-secondary">Intellekt va texnologiyaning strategik birlashmasi.</p>
-                  </div>
-              </div>
-              <div className="text-xs text-text-secondary">
-                <p>&copy; 2025 AI-Broker. Barcha huquqlar himoyalangan.</p>
-                <p>Yaratuvchi: <a href="https://cdcgroup.uz" target="_blank" rel="noopener noreferrer" className="font-semibold text-brand-primary hover:underline">CDCGroup</a> | Qo'llab-quvvatlash: <a href="https://cdcgroup.uz" target="_blank" rel="noopener noreferrer" className="font-semibold text-red-400 hover:underline">CraDev</a></p>
+      <div className="flex-1 flex flex-col overflow-hidden ml-16">
+        <Header currentView={view} onNewAnalysis={() => setView('input')} />
+        <main className="flex-1 overflow-y-auto">
+          {error && (
+            <div className="m-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+              <div className="flex items-center">
+                <ErrorIcon className="w-5 h-5 mr-2" />
+                <span>{error}</span>
               </div>
             </div>
-          </footer>
+          )}
+          
+          {view === 'dashboard' && (
+            <Dashboard 
+              tenders={allTenders} 
+              onSelectTender={handleSelectTender}
+              onArchiveTender={handleArchiveTender}
+              onDeleteTender={handleDeleteTender}
+              onToggleWatchlist={handleToggleWatchlist}
+              onViewSharedReport={handleViewSharedReport}
+              onExportToExcel={handleExportToExcel}
+              insights={insights}
+              loadingInsights={loadingInsights}
+              visionaryInsight={visionaryInsight}
+              loadingVisionary={loadingVisionary}
+              prefs={uiPrefs}
+            />
+          )}
+          
+          {view === 'input' && (
+            <InputForm 
+              onSubmit={handleStartSourcing}
+              companyProfile={companyProfile}
+            />
+          )}
+          
+          {view === 'loadingSourcing' && (
+            <LoadingIndicator 
+              title={t('loading-sourcing-title')}
+              description="AI dunyoning eng yaxshi yetkazib beruvchilarini qidirmoqda..."
+            />
+          )}
+          
+          {view === 'sourcingSelection' && sourcingResult && (
+            <SourcingSelection 
+              sourcingResult={sourcingResult}
+              onGenerateFinalReport={handleGenerateFinalReport}
+              onCancel={() => setView('input')}
+            />
+          )}
+          
+          {view === 'loadingAnalysis' && (
+            <LoadingIndicator 
+              title={t('loading-analysis-title')}
+              description="AI yakuniy tahlil yaratmoqda..."
+            />
+          )}
+          
+          {view === 'results' && activeTender && (
+            <AnalysisDashboard 
+              tender={activeTender}
+              onResetToDashboard={handleResetToDashboard}
+              onSetOutcome={(status) => setOutcomeToSet({id: activeTender.id, status})}
+              companyProfile={companyProfile}
+            />
+          )}
+          
+          {view === 'analytics' && (
+            <Analytics 
+              tenders={allTenders}
+              onSelectTender={handleSelectTender}
+              prefs={uiPrefs}
+            />
+          )}
+          
+          {view === 'sharedReport' && sharedTender && (
+            <AnalysisDashboard 
+              tender={sharedTender}
+              onResetToDashboard={handleResetToDashboard}
+              isSharedView={true}
+            />
+          )}
+          
+          {view === 'profile' && (
+            <ProfileSettings 
+              profile={companyProfile}
+              onSave={persistProfile}
+              prefs={uiPrefs}
+              onPrefsChange={handlePrefsChange}
+            />
+          )}
+          
+          {view === 'competitors' && (
+            <CompetitorsView 
+              tenders={allTenders}
+              prefs={uiPrefs}
+            />
+          )}
+          
+          {view === 'contracts' && (
+            <ContractsView 
+              contracts={analyzedContracts}
+              activeContract={activeContract}
+              onSelectContract={handleSelectContract}
+              onDeleteContract={(id) => {
+                const updatedContracts = analyzedContracts.filter(c => c.id !== id);
+                persistContracts(updatedContracts);
+                if (activeContract?.id === id) setActiveContract(null);
+              }}
+              onAnalyzeContract={handleAnalyzeContractRequest}
+              prefs={uiPrefs}
+            />
+          )}
+          
+          {view === 'loadingContract' && (
+            <LoadingIndicator 
+              title={t('loading-contract-title')}
+              description="AI shartnoma tahlil qilmoqda..."
+            />
+          )}
+          
+          {outcomeToSet && (
+            <TenderOutcomeForm 
+              tenderId={outcomeToSet.id}
+              currentStatus={outcomeToSet.status}
+              onSubmit={handleSetTenderOutcome}
+              onCancel={() => setOutcomeToSet(null)}
+            />
+          )}
+        </main>
       </div>
     </div>
   );

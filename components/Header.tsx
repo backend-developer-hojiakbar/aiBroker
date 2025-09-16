@@ -40,7 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, currentView, isCol
     const currentTheme = themeClasses[prefs.theme] || themeClasses.default;
     const iconStrokeWidth = prefs.iconStyle === 'bold' ? 2.5 : 2;
     
-    const [currentLanguage, setCurrentLanguage] = useState<'uz-latn' | 'uz-cyrl' | 'ru'>(getCurrentLanguage());
+    const [currentLanguage, setCurrentLanguage] = useState<'uz-latn' | 'uz-cyrl' | 'ru' | 'en'>(getCurrentLanguage());
 
     useEffect(() => {
         const handleLanguageChange = () => {
@@ -59,7 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, currentView, isCol
         { view: 'contracts', label: t('nav-contracts'), icon: <FileText strokeWidth={iconStrokeWidth} /> },
     ];
 
-    const handleLanguageChange = (lang: 'uz-latn' | 'uz-cyrl' | 'ru') => {
+    const handleLanguageChange = (lang: 'uz-latn' | 'uz-cyrl' | 'ru' | 'en') => {
         setLanguage(lang);
         onPrefsChange({ ...prefs, language: lang });
     };
@@ -95,12 +95,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, currentView, isCol
                     <label className="block text-xs font-semibold text-text-secondary mb-1">{t('language-selector')}</label>
                     <select
                         value={currentLanguage}
-                        onChange={(e) => handleLanguageChange(e.target.value as 'uz-latn' | 'uz-cyrl' | 'ru')}
+                        onChange={(e) => handleLanguageChange(e.target.value as 'uz-latn' | 'uz-cyrl' | 'ru' | 'en')}
                         className="w-full p-1 text-xs border border-border rounded bg-background text-text-primary"
                     >
                         <option value="uz-latn">{t('uzbek-latin')}</option>
                         <option value="uz-cyrl">{t('uzbek-cyrillic')}</option>
                         <option value="ru">{t('russian')}</option>
+                        <option value="en">{t('english')}</option>
                     </select>
                 </div>
                 <ul>
@@ -142,7 +143,7 @@ const viewTitles: Record<AppView, string> = {
 };
 
 export const Header: React.FC<HeaderProps> = ({ currentView, onNewAnalysis }) => {
-    const [currentLanguage, setCurrentLanguage] = useState<'uz-latn' | 'uz-cyrl' | 'ru'>(getCurrentLanguage());
+    const [currentLanguage, setCurrentLanguage] = useState<'uz-latn' | 'uz-cyrl' | 'ru' | 'en'>(getCurrentLanguage());
 
     useEffect(() => {
         const handleLanguageChange = () => {
